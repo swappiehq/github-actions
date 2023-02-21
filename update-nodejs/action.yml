@@ -1,5 +1,15 @@
 name: Update NodeJS
 description: Updates NodeJS for a project using asdf and Dockerfile
+inputs:
+  version:
+    type: choice
+    required: true
+    description: Selects the level of updates available for this action
+    options:
+      - latest
+      - lts
+      - minor-updates # Semver minor updates from MAJOR.MINOR.PATCH
+      - patch-updates # Semver patch updates from MAJOR.MINOR.PATCH
 runs:
   using: "composite"
   steps:
@@ -10,5 +20,5 @@ runs:
       with:
         plugin: nodejs
         docker_image: node
-        version: lts
+        version: '${{ inputs.version }}'
         release_notes: "https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V$MAJOR_VERSION.md#$LATEST_VERSION"

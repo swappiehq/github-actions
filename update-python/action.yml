@@ -1,5 +1,15 @@
 name: Update Python
 description: Updates Python for a project using asdf and Dockerfile
+inputs:
+  version:
+    type: choice
+    required: true
+    description: Selects the level of updates available for this action
+    options:
+      - latest
+      - lts
+      - minor-updates # Semver minor updates from MAJOR.MINOR.PATCH
+      - patch-updates # Semver patch updates from MAJOR.MINOR.PATCH
 runs:
   using: "composite"
   steps: 

@@ -32,9 +32,27 @@ runs:
         LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}")
         echo "Updating from $CURRENT_VERSION to $LATEST_VERSION"
         echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
+    - name: Get latest minor version from asdf
+      if: ${{ inputs.version == 'minor-updates' }}
+      shell: bash
+      run: |
+        echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
+        CURRENT_MINOR_VERSION=$(echo $CURRENT_VERSION | cut -d '.' -f 1)
+        LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}" $CURRENT_MINOR_VERSION)
+        echo "Updating from $CURRENT_VERSION to $LATEST_VERSION"
+        echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
+    - name: Get latest patch version from asdf
+      if: ${{ inputs.version == 'patch-updates' }}
+      shell: bash
+      run: |
+        echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
+        CURRENT_MINOR_VERSION=$(echo $CURRENT_VERSION | cut -d '.' -f 1,2)
+        LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}" $CURRENT_MINOR_VERSION)
+        echo "Updating from $CURRENT_VERSION to $LATEST_VERSION"
+        echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
     # TODO: This can be made much faster once this issue is resolved https://github.com/asdf-vm/asdf/issues/1483
     - name: Get newest ${{ inputs.version }} version by installing with asdf
-      if: ${{ inputs.version != 'latest' }}
+      if: ${{ inputs.version == 'lts' }}
       shell: bash
       run: |
         echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
