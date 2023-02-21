@@ -23,7 +23,7 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - uses: swappiehq/github-actions/actions/update-python@main
+      - uses: swappiehq/github-actions/update-python@main
   updateNode:
     name: "Update asdf NodeJS"
     permissions:
@@ -31,7 +31,7 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - uses: swappiehq/github-actions/actions/update-nodejs@main
+      - uses: swappiehq/github-actions/update-nodejs@main
 ```
 2. Allow Github actions to create pull requests to your repository in `Settings->Actions->Workflow Permissions`
 <img src="docs/assets/allow-github-action-pull-requests.png">
