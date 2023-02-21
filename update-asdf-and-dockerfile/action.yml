@@ -1,0 +1,77 @@
+name: Update asdf plugin
+description: Updates asdf .tool-versions and Dockerfile for given plugin
+inputs:
+  plugin:
+    type: string
+    required: true
+  docker_image:
+    type: string
+    required: false
+    default: ""
+  version:
+    type: string
+    required: true
+    default: "latest"
+  release_notes:
+    type: string
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v3
+    # Refer to external action with git commit SHA for security.
+    # Source: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
+    - name: ASDF Setup plugins
+      uses: asdf-vm/actions/plugins-add@6844d09b13209e7d2ce3b63d2b089a2acef581ec
+    - name: Get latest version from asdf
+      if: ${{ inputs.version == 'latest' }}
+      shell: bash
+      run: |
+        echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
+        LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}")
+        echo "Updating from $CURRENT_VERSION to $LATEST_VERSION"
+        echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
+    # TODO: This can be made much faster once this issue is resolved https://github.com/asdf-vm/asdf/issues/1483
+    - name: Get newest ${{ inputs.version }} version by installing with asdf
+      if: ${{ inputs.version != 'latest' }}
+      shell: bash
+      run: |
+        echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
+        asdf install ${{ inputs.plugin }} $( asdf latest ${{ inputs.plugin }} ${{ inputs.version }} )
+        LATEST_ASDF_VERSION=$(asdf latest ${{ inputs.plugin }} ${{ inputs.version }})
+        asdf install ${{ inputs.plugin }} $LATEST_ASDF_VERSION
+        LATEST_ACTUAL_VERSION=$(readlink $(asdf where nodejs $LATEST_ASDF_VERSION) | awk -F '/' '{print $(NF)}')
+        echo "Updating from $CURRENT_VERSION to $LATEST_ACTUAL_VERSION"
+        echo "LATEST_VERSION=${LATEST_ACTUAL_VERSION}" >> $GITHUB_ENV
+    - name: Create release notes link
+      shell: bash
+      run: |
+        LATEST_VERSION=${{ env.LATEST_VERSION }}
+        MAJOR_VERSION=$(echo $LATEST_VERSION | cut -d '.' -f 1)
+        MINOR_VERSION=$(echo $LATEST_VERSION | cut -d '.' -f 1,2)
+        LATEST_VERSION_WITH_DASHES=$(echo $LATEST_VERSION | tr . -)
+        RELEASE_NOTES=$(eval echo "${{ inputs.release_notes }}")
+        echo "RELEASE_NOTES=${RELEASE_NOTES}" >> $GITHUB_ENV
+    # This is much faster since asdf local command requires installing the new version
+    - name: Update latest version to .tool-versions
+      shell: bash
+      run: |
+        sed -i "s/^${{ inputs.plugin }} ${{ env.CURRENT_VERSION }}/${{ inputs.plugin }} ${{ env.LATEST_VERSION }}/" .tool-versions
+    - name: Update latest version to Dockerfile
+      shell: bash
+      run: |
+        test -n "${{ inputs.docker_image }}" && test -f Dockerfile && sed -i "s/^FROM ${{ inputs.docker_image }}:${{ env.CURRENT_VERSION }}/FROM ${{ inputs.docker_image }}:${{ env.LATEST_VERSION }}/" Dockerfile
+
+    # This is using the version 4.2.3
+    # Reference the repository with SHA for security
+    # Source: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
+    - uses: peter-evans/create-pull-request@2b011faafdcbc9ceb11414d64d0573f37c774b04
+      with:
+        add-paths: '.tool-versions,Dockerfile'
+        commit-message: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
+        title: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
+        branch: 'update/${{ inputs.plugin }}/${{ env.LATEST_VERSION }}'
+        body: 'See release notes in: ${{ env.RELEASE_NOTES }}'
+        delete-branch: true
+        labels: 'update,enhancement'

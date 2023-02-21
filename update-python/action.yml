@@ -1,0 +1,13 @@
+name: Update Python
+description: Updates Python for a project using asdf and Dockerfile
+runs:
+  using: "composite"
+  steps: 
+    # TODO: It would be better to reference this locally but if I do it refers a local file
+    # Not in the context of this repo but the repository that is using this action
+    # Because of this we need to use the full path to this :(
+    - uses: swappiehq/github-actions/update-asdf-and-dockerfile@main
+      with:
+        plugin: python
+        docker_image: python
+        release_notes: "https://docs.python.org/$MINOR_VERSION/whatsnew/changelog.html#python-$LATEST_VERSION_WITH_DASHES-final"
