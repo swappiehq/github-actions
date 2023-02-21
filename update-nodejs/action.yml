@@ -8,8 +8,8 @@ inputs:
     options:
       - latest
       - lts
-      - minor-updates # Semver minor updates from MAJOR.MINOR.PATCH
-      - patch-updates # Semver patch updates from MAJOR.MINOR.PATCH
+      - minor # Semver minor updates from MAJOR.MINOR.PATCH
+      - patch # Semver patch updates from MAJOR.MINOR.PATCH
 runs:
   using: "composite"
   steps:

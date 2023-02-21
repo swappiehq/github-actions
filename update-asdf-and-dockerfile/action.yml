@@ -10,13 +10,14 @@ inputs:
     default: ""
   version:
     type: choice
+    default: latest
     required: true
     description: Selects the level of updates available for this action
     options:
       - latest
       - lts
-      - minor-updates # Semver minor updates from MAJOR.MINOR.PATCH
-      - patch-updates # Semver patch updates from MAJOR.MINOR.PATCH
+      - minor # Semver minor updates from MAJOR.MINOR.PATCH
+      - patch # Semver patch updates from MAJOR.MINOR.PATCH
   release_notes:
     type: string
     required: true
@@ -38,7 +39,7 @@ runs:
         echo "Updating from $CURRENT_VERSION to $LATEST_VERSION"
         echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
     - name: Get latest minor version from asdf
-      if: ${{ inputs.version == 'minor-updates' }}
+      if: ${{ inputs.version == 'minor' }}
       shell: bash
       run: |
         echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
@@ -47,12 +48,12 @@ runs:
         echo "Updating from $CURRENT_VERSION to $LATEST_VERSION"
         echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
     - name: Get latest patch version from asdf
-      if: ${{ inputs.version == 'patch-updates' }}
+      if: ${{ inputs.version == 'patch' }}
       shell: bash
       run: |
         echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
-        CURRENT_MINOR_VERSION=$(echo $CURRENT_VERSION | cut -d '.' -f 1,2)
-        LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}" $CURRENT_MINOR_VERSION)
+        CURRENT_PATCH_VERSION=$(echo $CURRENT_VERSION | cut -d '.' -f 1,2)
+        LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}" $CURRENT_PATCH_VERSION)
         echo "Updating from $CURRENT_VERSION to $LATEST_VERSION"
         echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
     # TODO: This can be made much faster once this issue is resolved https://github.com/asdf-vm/asdf/issues/1483
