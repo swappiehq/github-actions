@@ -30,43 +30,38 @@ runs:
     # Source: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
     - name: ASDF Setup plugins
       uses: asdf-vm/actions/plugins-add@6844d09b13209e7d2ce3b63d2b089a2acef581ec
+    - name: Get current version from asdf
+      shell: bash
+      run: echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
     - name: Get latest version from asdf
       if: ${{ inputs.version == 'latest' }}
       shell: bash
       run: |
-        echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
         LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}")
-        echo "Updating from $CURRENT_VERSION to $LATEST_VERSION"
         echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
     - name: Get latest minor version from asdf
       if: ${{ inputs.version == 'minor' }}
       shell: bash
       run: |
-        echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
-        CURRENT_MINOR_VERSION=$(echo $CURRENT_VERSION | cut -d '.' -f 1)
+        CURRENT_MINOR_VERSION=$(echo ${{ env.CURRENT_VERSION }} | cut -d '.' -f 1)
         LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}" $CURRENT_MINOR_VERSION)
-        echo "Updating from $CURRENT_VERSION to $LATEST_VERSION"
         echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
     - name: Get latest patch version from asdf
       if: ${{ inputs.version == 'patch' }}
       shell: bash
       run: |
-        echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
-        CURRENT_PATCH_VERSION=$(echo $CURRENT_VERSION | cut -d '.' -f 1,2)
+        CURRENT_PATCH_VERSION=$(echo ${{ env.CURRENT_VERSION }} | cut -d '.' -f 1,2)
         LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}" $CURRENT_PATCH_VERSION)
-        echo "Updating from $CURRENT_VERSION to $LATEST_VERSION"
         echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
     # TODO: This can be made much faster once this issue is resolved https://github.com/asdf-vm/asdf/issues/1483
     - name: Get newest ${{ inputs.version }} version by installing with asdf
       if: ${{ inputs.version == 'lts' }}
       shell: bash
       run: |
-        echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
         asdf install ${{ inputs.plugin }} $( asdf latest ${{ inputs.plugin }} ${{ inputs.version }} )
         LATEST_ASDF_VERSION=$(asdf latest ${{ inputs.plugin }} ${{ inputs.version }})
         asdf install ${{ inputs.plugin }} $LATEST_ASDF_VERSION
         LATEST_ACTUAL_VERSION=$(readlink $(asdf where nodejs $LATEST_ASDF_VERSION) | awk -F '/' '{print $(NF)}')
-        echo "Updating from $CURRENT_VERSION to $LATEST_ACTUAL_VERSION"
         echo "LATEST_VERSION=${LATEST_ACTUAL_VERSION}" >> $GITHUB_ENV
     - name: Create release notes link
       shell: bash
@@ -76,6 +71,7 @@ runs:
         MINOR_VERSION=$(echo $LATEST_VERSION | cut -d '.' -f 1,2)
         LATEST_VERSION_WITH_DASHES=$(echo $LATEST_VERSION | tr . -)
         RELEASE_NOTES=$(eval echo "${{ inputs.release_notes }}")
+        echo "Updating from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}"
         echo "RELEASE_NOTES=${RELEASE_NOTES}" >> $GITHUB_ENV
     # This is much faster since asdf local command requires installing the new version
     - name: Update latest version to .tool-versions
