@@ -5,8 +5,8 @@ Contains few reusable actions to create automatic PRs to update NodeJS & Python.
 ## How to use
 1. Add this example configuration here into your repository in `.github/workflows/update-asdf.yml`
 ```yaml
-name: "Create update PRs"
-description: "Updates Python & Node to latest version every morning"
+name: "Update Python & Node"
+description: "Updates newer Python & Node versions every morning"
 
 on:
   schedule:
@@ -24,6 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: swappiehq/github-actions/update-python@main
+        with:
+          version: patch # Options are: latest, minor, patch
   updateNode:
     name: "Update asdf NodeJS"
     permissions:
@@ -32,6 +34,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: swappiehq/github-actions/update-nodejs@main
+        with:
+          version: minor # Options are: latest, lts, minor, patch
 ```
 2. Allow Github actions to create pull requests to your repository in `Settings->Actions->Workflow Permissions`
 <img src="docs/assets/allow-github-action-pull-requests.png">
