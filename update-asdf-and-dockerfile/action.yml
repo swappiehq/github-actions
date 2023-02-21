@@ -9,9 +9,14 @@ inputs:
     required: false
     default: ""
   version:
-    type: string
+    type: choice
     required: true
-    default: "latest"
+    description: Selects the level of updates available for this action
+    options:
+      - latest
+      - lts
+      - minor-updates # Semver minor updates from MAJOR.MINOR.PATCH
+      - patch-updates # Semver patch updates from MAJOR.MINOR.PATCH
   release_notes:
     type: string
     required: true

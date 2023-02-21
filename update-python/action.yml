@@ -20,4 +20,5 @@ runs:
       with:
         plugin: python
         docker_image: python
+        version: '${{ inputs.version }}'
         release_notes: "https://docs.python.org/$MINOR_VERSION/whatsnew/changelog.html#python-$LATEST_VERSION_WITH_DASHES-final"
