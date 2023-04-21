@@ -95,3 +95,4 @@ runs:
         body: 'See release notes in: ${{ env.RELEASE_NOTES }}'
         delete-branch: true
         labels: 'update,enhancement'
+        author: 'GitHub <noreply@github.com>'
