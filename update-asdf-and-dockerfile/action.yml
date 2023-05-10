@@ -88,17 +88,21 @@ runs:
       shell: bash
       run: |
         test -f package.json && \
+        echo "package.json engines before update:" && \
+        jq ".engines" package.json && \
         asdf install nodejs ${{ env.LATEST_VERSION }} && \
         asdf global nodejs ${{ env.LATEST_VERSION }} && \
         cat package.json | jq ".engines.node |= \"^$(node --version | tr -d v)\"" | jq ".engines.npm |= \"^$(npm --version)\"" > updated-package.json && \
-        mv updated-package.json package.json
+        mv updated-package.json package.json && \
+        echo "package.json engines after update:" && \
+        jq ".engines" package.json
 
     # This is using the version 4.2.3
     # Reference the repository with SHA for security
     # Source: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
     - uses: peter-evans/create-pull-request@2b011faafdcbc9ceb11414d64d0573f37c774b04
       with:
-        add-paths: '.tool-versions,Dockerfile'
+        add-paths: '.tool-versions,Dockerfile,package.json'
         commit-message: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
         title: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
         branch: 'update/${{ inputs.plugin }}/${{ env.LATEST_VERSION }}'
