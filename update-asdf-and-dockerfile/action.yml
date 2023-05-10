@@ -95,8 +95,11 @@ runs:
         cat package.json | jq ".engines.node |= \"^$(node --version | tr -d v)\"" | jq ".engines.npm |= \"^$(npm --version)\"" > updated-package.json && \
         mv updated-package.json package.json && \
         echo "package.json engines after update:" && \
-        jq ".engines" package.json && \
-        npm install
+        jq ".engines" package.json
+    - name: Run npm install to update package-lock.json
+      if: ${{ inputs.plugin == 'nodejs' && env.CURRENT_VERSION !== env.LATEST_VERSION }}
+      shell: bash
+      run: npm install
 
     # This is using the version 4.2.3
     # Reference the repository with SHA for security
