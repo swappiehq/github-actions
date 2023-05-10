@@ -88,8 +88,6 @@ runs:
       shell: bash
       run: |
         test -f package.json && \
-        sudo apt-get update && \
-        sudo apt-get install jq && \
         asdf install nodejs ${{ env.LATEST_VERSION }} && \
         asdf global nodejs ${{ env.LATEST_VERSION }} && \
         cat package.json | jq ".engines.node |= \"^$(node --version | tr -d v)\"" | jq ".engines.npm |= \"^$(npm --version)\"" > updated-package.json && \
