@@ -97,7 +97,7 @@ runs:
         echo "package.json engines after update:" && \
         jq ".engines" package.json
     - name: Run npm install to update package-lock.json
-      if: ${{ inputs.plugin == 'nodejs' && env.CURRENT_VERSION !== env.LATEST_VERSION }}
+      if: ${{ inputs.plugin == 'nodejs' && env.CURRENT_VERSION != env.LATEST_VERSION }}
       shell: bash
       run: npm install
 
