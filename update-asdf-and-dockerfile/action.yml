@@ -82,13 +82,16 @@ runs:
       shell: bash
       run: |
         test -n "${{ inputs.docker_image }}" && test -f Dockerfile && sed -i "s/^FROM ${{ inputs.docker_image }}:${{ env.CURRENT_VERSION }}/FROM ${{ inputs.docker_image }}:${{ env.LATEST_VERSION }}/" Dockerfile
+    # We need to actually install nodejs to see the bundled npm version of the new nodejs
     - name: Update latest versions to package.json engines if it exists
+      if: ${{ inputs.plugin == 'nodejs' }}
       shell: bash
       run: |
         test -f package.json && \
         sudo apt-get update && \
         sudo apt-get install jq && \
-        asdf install && \
+        asdf install nodejs ${{ env.LATEST_VERSION }} && \
+        asdf global nodejs ${{ env.LATEST_VERSION }} && \
         cat package.json | jq ".engines.node |= \"^$(node --version | tr -d v)\"" | jq ".engines.npm |= \"^$(npm --version)\"" > updated-package.json && \
         mv updated-package.json package.json
 
