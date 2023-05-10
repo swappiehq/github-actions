@@ -99,7 +99,7 @@ runs:
     - name: Run npm install to update package-lock.json
       if: ${{ inputs.plugin == 'nodejs' && env.CURRENT_VERSION != env.LATEST_VERSION }}
       shell: bash
-      run: npm install
+      run: npm install --package-lock-only
 
     # This is using the version 4.2.3
     # Reference the repository with SHA for security
