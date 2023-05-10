@@ -96,13 +96,17 @@ runs:
         mv updated-package.json package.json && \
         echo "package.json engines after update:" && \
         jq ".engines" package.json
+    - name: Run npm install to update package-lock.json
+      if: ${{ inputs.plugin == 'nodejs' && env.CURRENT_VERSION != env.LATEST_VERSION }}
+      shell: bash
+      run: npm install
 
     # This is using the version 4.2.3
     # Reference the repository with SHA for security
     # Source: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
     - uses: peter-evans/create-pull-request@2b011faafdcbc9ceb11414d64d0573f37c774b04
       with:
-        add-paths: '.tool-versions,Dockerfile,package.json'
+        add-paths: '.tool-versions,Dockerfile,package.json,package-lock.json'
         commit-message: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
         title: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
         branch: 'update/${{ inputs.plugin }}/${{ env.LATEST_VERSION }}'
