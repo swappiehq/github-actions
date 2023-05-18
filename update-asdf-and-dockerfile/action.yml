@@ -109,8 +109,8 @@ runs:
         add-paths: |
             .tool-versions
             Dockerfile
-            '*package.json'
-            '*package-lock.json'
+            *package.json
+            *package-lock.json
         commit-message: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
         title: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
         branch: 'update/${{ inputs.plugin }}/${{ env.LATEST_VERSION }}'
