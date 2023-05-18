@@ -106,7 +106,11 @@ runs:
     # Source: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
     - uses: peter-evans/create-pull-request@2b011faafdcbc9ceb11414d64d0573f37c774b04
       with:
-        add-paths: '.tool-versions,Dockerfile,package.json,package-lock.json'
+        add-paths: |
+            .tool-versions
+            Dockerfile
+            '*package.json'
+            '*package-lock.json'
         commit-message: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
         title: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
         branch: 'update/${{ inputs.plugin }}/${{ env.LATEST_VERSION }}'
