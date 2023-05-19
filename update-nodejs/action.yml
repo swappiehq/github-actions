@@ -10,6 +10,10 @@ inputs:
       - lts
       - minor # Semver minor updates from MAJOR.MINOR.PATCH
       - patch # Semver patch updates from MAJOR.MINOR.PATCH
+  package_json_prefix:
+    type: string
+    required: false
+    default: "."
 runs:
   using: "composite"
   steps:
