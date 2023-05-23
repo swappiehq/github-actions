@@ -91,19 +91,19 @@ runs:
       if: ${{ inputs.plugin == 'nodejs' }}
       shell: bash
       run: |
-        test -f {{ inputs.package_json_prefix }}/package.json && \
+        test -f ${{ inputs.package_json_prefix }}/package.json && \
         echo "package.json engines before update:" && \
-        jq ".engines" {{ inputs.package_json_prefix }}/package.json && \
+        jq ".engines" ${{ inputs.package_json_prefix }}/package.json && \
         asdf install nodejs ${{ env.LATEST_VERSION }} && \
         asdf global nodejs ${{ env.LATEST_VERSION }} && \
-        cat {{ inputs.package_json_prefix }}/package.json | jq ".engines.node |= \"^$(node --version | tr -d v)\"" | jq ".engines.npm |= \"^$(npm --version)\"" > updated-package.json && \
-        mv updated-package.json {{ inputs.package_json_prefix }}/package.json && \
+        cat ${{ inputs.package_json_prefix }}/package.json | jq ".engines.node |= \"^$(node --version | tr -d v)\"" | jq ".engines.npm |= \"^$(npm --version)\"" > updated-package.json && \
+        mv updated-package.json ${{ inputs.package_json_prefix }}/package.json && \
         echo "package.json engines after update:" && \
-        jq ".engines" {{ inputs.package_json_prefix }}/package.json
+        jq ".engines" ${{ inputs.package_json_prefix }}/package.json
     - name: Run npm install to update package-lock.json
       if: ${{ inputs.plugin == 'nodejs' && env.CURRENT_VERSION != env.LATEST_VERSION }}
       shell: bash
-      run: npm --prefix {{ inputs.package_json_prefix }} install
+      run: npm --prefix ${{ inputs.package_json_prefix }} install
 
     # This is using the version 4.2.3
     # Reference the repository with SHA for security
