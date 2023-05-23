@@ -25,4 +25,5 @@ runs:
         plugin: nodejs
         docker_image: node
         version: '${{ inputs.version }}'
+        package_json_prefix: : '${{ inputs.package_json_prefix }}'
         release_notes: "https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V$MAJOR_VERSION.md#$LATEST_VERSION"
