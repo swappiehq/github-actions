@@ -7,7 +7,6 @@ inputs:
     description: Selects the level of updates available for this action
     options:
       - latest
-      - lts
       - minor # Semver minor updates from MAJOR.MINOR.PATCH
       - patch # Semver patch updates from MAJOR.MINOR.PATCH
 runs:
