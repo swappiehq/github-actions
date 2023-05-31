@@ -57,16 +57,13 @@ runs:
         CURRENT_PATCH_VERSION=$(echo ${{ env.CURRENT_VERSION }} | cut -d '.' -f 1,2)
         LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}" $CURRENT_PATCH_VERSION)
         echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
-    # TODO: This can be made much faster once this issue is resolved https://github.com/asdf-vm/asdf/issues/1483
-    - name: Get newest ${{ inputs.version }} version by installing with asdf
-      if: ${{ inputs.version == 'lts' }}
+    # NodeJS has LTS versions
+    - name: Get newest NodeJS LTS version
+      if: ${{ inputs.version == 'lts' && inputs.plugin = 'nodejs' }}
       shell: bash
       run: |
-        asdf install ${{ inputs.plugin }} $( asdf latest ${{ inputs.plugin }} ${{ inputs.version }} )
-        LATEST_ASDF_VERSION=$(asdf latest ${{ inputs.plugin }} ${{ inputs.version }})
-        asdf install ${{ inputs.plugin }} $LATEST_ASDF_VERSION
-        LATEST_ACTUAL_VERSION=$(readlink $(asdf where nodejs $LATEST_ASDF_VERSION) | awk -F '/' '{print $(NF)}')
-        echo "LATEST_VERSION=${LATEST_ACTUAL_VERSION}" >> $GITHUB_ENV
+        LATEST_VERSION=$(asdf latest nodejs $(asdf nodejs resolve lts))
+        echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
     - name: Create release notes link
       shell: bash
       run: |
@@ -88,7 +85,7 @@ runs:
         test -n "${{ inputs.docker_image }}" && test -f Dockerfile && sed -i "s/^FROM ${{ inputs.docker_image }}:${{ env.CURRENT_VERSION }}/FROM ${{ inputs.docker_image }}:${{ env.LATEST_VERSION }}/" Dockerfile
     # We need to actually install nodejs to see the bundled npm version of the new nodejs
     - name: Update latest versions to package.json engines if it exists
-      if: ${{ inputs.plugin == 'nodejs' }}
+      if: ${{ inputs.plugin == 'nodejs' && env.CURRENT_VERSION != env.LATEST_VERSION }}
       shell: bash
       run: |
         test -f ${{ inputs.package_json_prefix }}/package.json && \
