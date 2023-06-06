@@ -59,7 +59,7 @@ runs:
         echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
     # NodeJS has LTS versions
     - name: Get newest NodeJS LTS version
-      if: ${{ inputs.version == 'lts' && inputs.plugin = 'nodejs' }}
+      if: ${{ inputs.version == 'lts' && inputs.plugin == 'nodejs' }}
       shell: bash
       run: |
         LATEST_VERSION=$(asdf latest nodejs $(asdf nodejs resolve lts))
