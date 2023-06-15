@@ -108,11 +108,7 @@ runs:
     # Here we use a wild card for the package.json files to avoid "pathspec 'xxx' did not match any files" errors as package.json files may not exist or be in subdirectories
     - uses: peter-evans/create-pull-request@2b011faafdcbc9ceb11414d64d0573f37c774b04
       with:
-        add-paths: |
-            .tool-versions
-            Dockerfile
-            *package.json
-            *package-lock.json
+        add-paths: .tool-versions, Dockerfile${{inputs.plugin == 'nodejs' && ', *package.json, *package-lock.json' || '' }}
         commit-message: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
         title: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
         branch: 'update/${{ inputs.plugin }}/${{ env.LATEST_VERSION }}'
