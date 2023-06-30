@@ -98,16 +98,14 @@ runs:
         mv updated-package.json $PACKAGE_JSON
         mv updated-package-lock.json $LOCK_JSON
     
+    # The earlier 'ASDF Setup plugins' step already installs all plugins and related languages
+    # Because of this we can just directly use poetry/python/node/npm here
     - name: Update latest python version to pyproject.toml if it exists
       if: ${{ inputs.plugin == 'python' && env.CURRENT_VERSION != env.LATEST_VERSION }}
       shell: bash
       run: |
         test -f pyproject.toml && \
         sed -i "s/^python =.*/python = \"^${{ env.LATEST_VERSION }}\"/" pyproject.toml && \
-        asdf plugin-add python && \
-        asdf plugin-add poetry && \
-        asdf install python && \
-        asdf install poetry && \
         poetry lock --no-update
 
     # This is using the version 4.2.3
