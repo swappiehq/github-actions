@@ -21,3 +21,5 @@ runs:
         docker_image: python
         version: '${{ inputs.version }}'
         release_notes: "https://docs.python.org/$MINOR_VERSION/whatsnew/changelog.html#python-$LATEST_VERSION_WITH_DASHES-final"
+        # Github actions doesn't support array items so we just concatenate these
+        add_extra_files_to_pr: '*pyproject.toml, *poetry.lock'
