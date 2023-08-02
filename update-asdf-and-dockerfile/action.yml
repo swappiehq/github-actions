@@ -114,6 +114,14 @@ runs:
         asdf install python && \
         asdf install poetry && \
         poetry lock --no-update
+    - name: Update latest poetry version to pyproject.toml if it exists
+      if: ${{ inputs.plugin == 'poetry' && env.CURRENT_VERSION != env.LATEST_VERSION }}
+      shell: bash
+      run: |
+        test -f pyproject.toml && \
+        sed -i "s/^poetry =.*/poetry = \"^${{ env.LATEST_VERSION }}\"/" pyproject.toml && \
+        asdf install poetry && \
+        poetry lock --no-update
 
     # This is using the version 4.2.3
     # Reference the repository with SHA for security
