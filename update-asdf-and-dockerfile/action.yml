@@ -95,7 +95,8 @@ runs:
         PACKAGE_JSON=${{ inputs.package_json_prefix }}/package.json
         LOCK_JSON=${{ inputs.package_json_prefix }}/package-lock.json
         test -f $PACKAGE_JSON && jq ".engines" $PACKAGE_JSON || { echo "Skipping update since package.json or engines don't exist"; exit 0; }
-        BUNDLED_NPM_VERSION=$(curl https://nodejs.org/dist/index.json | jq ".[] | select(.version == \"v${{ env.LATEST_VERSION }}\") | .npm" | head -n 1)
+        asdf install nodejs ${{ env.LATEST_VERSION }}
+        BUNDLED_NPM_VERSION=$(asdf exec npm --version)
         [[ "$BUNDLED_NPM_VERSION" =~ ^[.0-9]+$ ]] || { echo "Failed to fetch the new NPM version"; exit 1; }
         jq ".engines.node = \"^${{ env.LATEST_VERSION }}\" | .engines.npm = \"^$BUNDLED_NPM_VERSION\"" $PACKAGE_JSON > updated-package.json
         jq ".packages.\"\".engines.node = \"^${{ env.LATEST_VERSION }}\" | .packages.\"\".engines.npm = \"^$BUNDLED_NPM_VERSION\"" $LOCK_JSON > updated-package-lock.json
