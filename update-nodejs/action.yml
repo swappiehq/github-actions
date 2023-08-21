@@ -29,3 +29,5 @@ runs:
         release_notes: "https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V$MAJOR_VERSION.md#$LATEST_VERSION"
         # Github actions doesn't support array items so we just concatenate these
         add_extra_files_to_pr: '*package.json, *package-lock.json'
+        # Use similiar PR labels as Dependabot is using
+        github_pullrequest_labels: 'javascript'
