@@ -1,0 +1,22 @@
+name: Update Poetry
+description: Updates Poetry for a project using asdf
+inputs:
+  version:
+    type: choice
+    required: true
+    description: Selects the level of updates available for this action
+    options:
+      - latest
+      - minor # Semver minor updates from MAJOR.MINOR.PATCH
+      - patch # Semver patch updates from MAJOR.MINOR.PATCH
+runs:
+  using: "composite"
+  steps:
+    # TODO: It would be better to reference this locally but if I do it refers a local file
+    # Not in the context of this repo but the repository that is using this action
+    # Because of this we need to use the full path to this :(
+    - uses: swappiehq/github-actions/update-asdf-and-dockerfile@main
+      with:
+        plugin: poetry
+        version: '${{ inputs.version }}'
+        release_notes: "https://github.com/python-poetry/poetry/releases/tag/$LATEST_VERSION"
