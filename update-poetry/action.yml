@@ -21,4 +21,4 @@ runs:
         version: '${{ inputs.version }}'
         release_notes: "https://github.com/python-poetry/poetry/releases/tag/$LATEST_VERSION"
         # Use similiar PR labels as Dependabot is using
-        github_pullrequest_label: 'python,poetry'
+        github_pullrequest_extra_labels: 'python,poetry'
