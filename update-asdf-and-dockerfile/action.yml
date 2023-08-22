@@ -87,6 +87,8 @@ runs:
       run: |
         sed -i "s/^${{ inputs.plugin }} ${{ env.CURRENT_VERSION }}/${{ inputs.plugin }} ${{ env.LATEST_VERSION }}/" .tool-versions
     - name: Update latest version to Dockerfile
+    # Poetry is not inhereted directly from a Dockerfile but installed as separate step
+      if: ${{ inputs.plugin != 'poetry' }}
       shell: bash
       run: |
         test -n "${{ inputs.docker_image }}" && test -f Dockerfile && sed -i "s/^FROM ${{ inputs.docker_image }}:${{ env.CURRENT_VERSION }}/FROM ${{ inputs.docker_image }}:${{ env.LATEST_VERSION }}/" Dockerfile
