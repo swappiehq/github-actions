@@ -125,8 +125,8 @@ runs:
       shell: bash
       run: |
         test -f pyproject.toml && \
+        asdf install poetry  && \
         poetry version ${{ env.LATEST_VERSION }} && \
-        asdf install poetry && \
         poetry lock --no-update
 
     # This is using the version 4.2.3
