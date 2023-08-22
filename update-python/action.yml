@@ -6,7 +6,7 @@ inputs:
     required: true
     description: Selects the level of updates available for this action
     options:
-      - latest
+      - major
       - minor # Semver minor updates from MAJOR.MINOR.PATCH
       - patch # Semver patch updates from MAJOR.MINOR.PATCH
 runs:
