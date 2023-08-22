@@ -20,6 +20,7 @@ runs:
         plugin: poetry
         version: '${{ inputs.version }}'
         release_notes: "https://github.com/python-poetry/poetry/releases/tag/$LATEST_VERSION"
+        # Github actions doesn't support array items so we just concatenate these
+        add_extra_files_to_pr: '*pyproject.toml, *poetry.lock'
         # Use similiar PR labels as Dependabot is using
         github_pullrequest_extra_labels: 'python,poetry'
-        add_extra_files_to_pr: '*poetry.lock'
