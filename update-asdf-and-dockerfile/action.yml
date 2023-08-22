@@ -127,7 +127,16 @@ runs:
         test -f pyproject.toml && \
         asdf install poetry  && \
         poetry version ${{ env.LATEST_VERSION }} && \
-        poetry lock --no-update
+      # Exit the virtualenv so that poetry can install properly
+        deactivate && \
+      # Force poetry to use latest python from asdf always
+        poetry env use $(which python) && \
+      # Update the lock file without installation
+        poetry lock --no-update && \
+      # Remove all virtualenvs which are not activated so that other tools don't use them
+        poetry env list | grep -v Activated | xargs -L 1 poetry env remove && \
+      # Install the new version
+        poetry install
 
     # This is using the version 4.2.3
     # Reference the repository with SHA for security
