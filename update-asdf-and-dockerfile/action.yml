@@ -21,6 +21,9 @@ inputs:
   release_notes:
     type: string
     required: true
+  github_pullrequest_extra_labels:
+    type: string
+    required: true
   package_json_prefix:
     type: string
     required: false
@@ -136,5 +139,5 @@ runs:
         branch: 'update/${{ inputs.plugin }}/${{ env.LATEST_VERSION }}'
         body: 'See release notes in: ${{ env.RELEASE_NOTES }}'
         delete-branch: true
-        labels: 'update,enhancement'
+        labels: 'dependencies,${{ inputs.github_pullrequest_extra_labels }}'
         author: 'GitHub <noreply@github.com>'
