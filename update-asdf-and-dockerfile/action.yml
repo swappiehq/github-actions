@@ -45,7 +45,7 @@ runs:
       shell: bash
       run: echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
     - name: Get latest version from asdf
-      if: ${{ inputs.version == 'latest' }}
+      if: ${{ inputs.version == 'major' }}
       shell: bash
       run: |
         LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}")

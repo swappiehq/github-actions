@@ -6,7 +6,7 @@ inputs:
     required: true
     description: Selects the level of updates available for this action
     options:
-      - latest
+      - major
       - lts
       - minor # Semver minor updates from MAJOR.MINOR.PATCH
       - patch # Semver patch updates from MAJOR.MINOR.PATCH
@@ -30,4 +30,4 @@ runs:
         # Github actions doesn't support array items so we just concatenate these
         add_extra_files_to_pr: '*package.json, *package-lock.json'
         # Use similiar PR labels as Dependabot is using
-        github_pullrequest_labels: 'javascript'
+        github_pullrequest_extra_labels: 'javascript'
