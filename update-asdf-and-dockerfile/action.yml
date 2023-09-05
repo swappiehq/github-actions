@@ -116,7 +116,7 @@ runs:
       shell: bash
       run: |
         test -f pyproject.toml && \
-        sed -i "s/^python =.*/python = \"^${{ env.LATEST_VERSION }}\"/" pyproject.toml && \
+        sed -i "s/^python =.*/python = \"${{ env.LATEST_VERSION }}\"/" pyproject.toml && \
         asdf install python && \
         asdf install poetry && \
         poetry lock --no-update
