@@ -95,7 +95,7 @@ runs:
       if: ${{ inputs.plugin != 'poetry' }}
       shell: bash
       run: |
-        test -n "${{ inputs.docker_image }}" && test -f {{inputs.docker_file_name}} && sed -i "s/^FROM ${{inputs.docker_file_name}}:${{ env.CURRENT_VERSION }}/FROM ${{ inputs.docker_image }}:${{ env.LATEST_VERSION }}/" {{inputs.docker_file_name}}
+        test -n "${{ inputs.docker_image }}" && test -f ${{inputs.docker_file_name}} && sed -i "s/^FROM ${{inputs.docker_file_name}}:${{ env.CURRENT_VERSION }}/FROM ${{ inputs.docker_image }}:${{ env.LATEST_VERSION }}/" {{inputs.docker_file_name}}
     # This fetches the bundled NPM version from nodejs.org so that we don't need to install nodejs+npm packages here
     - name: Update latest node/npm versions to package.json engines if it exists
       if: ${{ inputs.plugin == 'nodejs' && env.CURRENT_VERSION != env.LATEST_VERSION }}
