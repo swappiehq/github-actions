@@ -8,6 +8,10 @@ inputs:
     type: string
     required: false
     default: ""
+  docker_file_name:
+    type: string
+    required: false
+    default: "Dockerfile"
   version:
     type: choice
     default: latest
@@ -87,11 +91,11 @@ runs:
       run: |
         sed -i "s/^${{ inputs.plugin }} ${{ env.CURRENT_VERSION }}/${{ inputs.plugin }} ${{ env.LATEST_VERSION }}/" .tool-versions
     - name: Update latest version to Dockerfile
-    # Poetry is not inhereted directly from a Dockerfile but installed as separate step
+      # Poetry is not inhereted directly from a Dockerfile but installed as separate step
       if: ${{ inputs.plugin != 'poetry' }}
       shell: bash
       run: |
-        test -n "${{ inputs.docker_image }}" && test -f Dockerfile && sed -i "s/^FROM ${{ inputs.docker_image }}:${{ env.CURRENT_VERSION }}/FROM ${{ inputs.docker_image }}:${{ env.LATEST_VERSION }}/" Dockerfile
+        test -n "${{ inputs.docker_image }}" && test -f ${{inputs.docker_file_name}} && sed -i "s/^FROM ${{inputs.docker_file_name}}:${{ env.CURRENT_VERSION }}/FROM ${{ inputs.docker_image }}:${{ env.LATEST_VERSION }}/" ${{inputs.docker_file_name}}
     # This fetches the bundled NPM version from nodejs.org so that we don't need to install nodejs+npm packages here
     - name: Update latest node/npm versions to package.json engines if it exists
       if: ${{ inputs.plugin == 'nodejs' && env.CURRENT_VERSION != env.LATEST_VERSION }}
@@ -135,7 +139,7 @@ runs:
     # Here we use a wild card for the package.json files to avoid "pathspec 'xxx' did not match any files" errors as package.json files may not exist or be in subdirectories
     - uses: peter-evans/create-pull-request@2b011faafdcbc9ceb11414d64d0573f37c774b04
       with:
-        add-paths: .tool-versions, Dockerfile${{inputs.add_extra_files_to_pr != '' && format(', {0}', inputs.add_extra_files_to_pr) || '' }}
+        add-paths: .tool-versions, ${{inputs.docker_file_name}}${{inputs.add_extra_files_to_pr != '' && format(', {0}', inputs.add_extra_files_to_pr) || '' }}
         commit-message: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
         title: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
         branch: 'update/${{ inputs.plugin }}/${{ env.LATEST_VERSION }}'

@@ -9,9 +9,13 @@ inputs:
       - major
       - minor # Semver minor updates from MAJOR.MINOR.PATCH
       - patch # Semver patch updates from MAJOR.MINOR.PATCH
+  docker_file_name:
+    type: string
+    required: false
+    default: "Dockerfile"
 runs:
   using: "composite"
-  steps: 
+  steps:
     # TODO: It would be better to reference this locally but if I do it refers a local file
     # Not in the context of this repo but the repository that is using this action
     # Because of this we need to use the full path to this :(
@@ -19,7 +23,7 @@ runs:
       with:
         plugin: python
         docker_image: python
-        
+        docker_file_name: ${{ inputs.docker_file_name }}
         version: '${{ inputs.version }}'
         release_notes: "https://docs.python.org/$MINOR_VERSION/whatsnew/changelog.html#python-$LATEST_VERSION_WITH_DASHES-final"
         # Github actions doesn't support array items so we just concatenate these
