@@ -40,6 +40,17 @@ jobs:
 2. Allow Github actions to create pull requests to your repository in `Settings->Actions->Workflow Permissions`
 <img src="docs/assets/allow-github-action-pull-requests.png">
 
+### Approve & Enqueue PRs
+
+> Custom Github action to approve and enqueue specific PRs based on branch name
+
+### Get started
+
+1. `npm i`
+2. make changes in `src/`
+3. `npm run build`
+4. commit with both `src/` and `target/` changes
+
 ## License
 
 [MIT](LICENSE)
