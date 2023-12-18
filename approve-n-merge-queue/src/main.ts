@@ -10,19 +10,13 @@ async function approvePR(kit: Octokit, { prId, body }: ApprovePrProps): Promise<
   const query = `
 mutation ($prId: ID!, $body: String!) {
   addPullRequestReview(input: {pullRequestId: $prId, event: APPROVE, body: $body}) {
-    reviewEdge {
-      cursor
-      node {
-        id
-        state
-      }
-    }
+    __typename
   }
 }
 `
 
   try {
-    await kit.graphql<{}>(query, { prId, body })
+    await kit.graphql<{ addPullRequestReview?: {} }>(query, { prId, body })
     return { approved: true }
   } catch (e) {
     console.error('could not approve', e)
@@ -30,27 +24,24 @@ mutation ($prId: ID!, $body: String!) {
   }
 }
 
-interface EnqueuePrProps {
+interface AutoMergePrProps {
   prId: string
 }
-async function enqueuePR(kit: Octokit, { prId }: EnqueuePrProps): Promise<{ enqueued: boolean }> {
+async function autoMergePr(kit: Octokit, { prId }: AutoMergePrProps): Promise<{ enabled: boolean }> {
   const query = `
 mutation ($prId: ID!) {
-  enqueuePullRequest(input: {pullRequestId: $prId}) {
-    clientMutationId
-    mergeQueueEntry {
-      position
-    }
+  enablePullRequestAutoMerge(input: {pullRequestId: $prId}) {
+    __typename
   }
 }
 `
 
   try {
-    await kit.graphql<{}>(query, { prId })
-    return { enqueued: true }
+    await kit.graphql<{ enablePullRequestAutoMerge?: {} }>(query, { prId })
+    return { enabled: true }
   } catch (e) {
-    console.error('could not enqueue', e)
-    return { enqueued: false }
+    console.error('could not auto merge', e)
+    return { enabled: false }
   }
 }
 
@@ -76,10 +67,6 @@ query ($owner: String!, $repo: String!, $branch: String!) {
         url
         number
         state
-        mergeQueueEntry {
-          id
-          state
-        }
         reviews(first: 30) {
           nodes {
             id
@@ -108,10 +95,6 @@ query ($owner: String!, $repo: String!, $branch: String!) {
           url: string
           number: number
           state: 'OPEN' | 'CLOSED' | 'MERGED'
-          mergeQueueEntry?: {
-            id: string
-            state: 'AWAITING_CHECKS' | 'LOCKED' | 'MERGEABLE' | 'QUEUED' | 'UNMERGEABLE'
-          }
           reviews?: {
             nodes: Array<{
               id: string
@@ -149,7 +132,6 @@ query ($owner: String!, $repo: String!, $branch: String!) {
     state: node.state,
     labels: node.labels?.nodes ?? [],
     reviews: node.reviews?.nodes ?? [],
-    mergeQueueEntry: node.mergeQueueEntry,
   }
 }
 
@@ -159,7 +141,7 @@ async function main() {
   const owner = core.getInput('owner', { required: true })
   const branch = core.getInput('branch', { required: true })
   const stopLabels = core
-    .getInput('stop-labels', { required: false, trimWhitespace: true })
+    .getInput('stop-labels')
     .toLowerCase()
     .split(',')
     .map((str) => str.trim())
@@ -206,20 +188,7 @@ async function main() {
     core.debug('skip approving this PR')
   }
 
-  const mergeQueueState = pr.mergeQueueEntry?.state ?? 'MERGEABLE'
-
-  if (mergeQueueState === 'MERGEABLE' || mergeQueueState === 'AWAITING_CHECKS') {
-    core.debug('time to enqueue this PR')
-    const enqueueResult = await enqueuePR(kit, { prId: pr.id })
-
-    if (!enqueueResult.enqueued) {
-      core.setFailed(`Could not enqueue PR #${pr.number}`)
-      return
-    }
-  } else {
-    console.log(pr)
-    core.setFailed('PR seems to be unmergeable')
-  }
+  await autoMergePr(kit, { prId: pr.id })
 }
 
 main().catch((e) => {

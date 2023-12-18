@@ -28941,13 +28941,7 @@ async function approvePR(kit, { prId, body }) {
     const query = `
 mutation ($prId: ID!, $body: String!) {
   addPullRequestReview(input: {pullRequestId: $prId, event: APPROVE, body: $body}) {
-    reviewEdge {
-      cursor
-      node {
-        id
-        state
-      }
-    }
+    __typename
   }
 }
 `;
@@ -28960,24 +28954,21 @@ mutation ($prId: ID!, $body: String!) {
         return { approved: false };
     }
 }
-async function enqueuePR(kit, { prId }) {
+async function autoMergePr(kit, { prId }) {
     const query = `
 mutation ($prId: ID!) {
-  enqueuePullRequest(input: {pullRequestId: $prId}) {
-    clientMutationId
-    mergeQueueEntry {
-      position
-    }
+  enablePullRequestAutoMerge(input: {pullRequestId: $prId}) {
+    __typename
   }
 }
 `;
     try {
         await kit.graphql(query, { prId });
-        return { enqueued: true };
+        return { enabled: true };
     }
     catch (e) {
-        console.error('could not enqueue', e);
-        return { enqueued: false };
+        console.error('could not auto merge', e);
+        return { enabled: false };
     }
 }
 async function findPR(kit, { owner, repo, branch }) {
@@ -28997,10 +28988,6 @@ query ($owner: String!, $repo: String!, $branch: String!) {
         url
         number
         state
-        mergeQueueEntry {
-          id
-          state
-        }
         reviews(first: 30) {
           nodes {
             id
@@ -29037,7 +29024,6 @@ query ($owner: String!, $repo: String!, $branch: String!) {
         state: node.state,
         labels: node.labels?.nodes ?? [],
         reviews: node.reviews?.nodes ?? [],
-        mergeQueueEntry: node.mergeQueueEntry,
     };
 }
 async function main() {
@@ -29046,7 +29032,7 @@ async function main() {
     const owner = core.getInput('owner', { required: true });
     const branch = core.getInput('branch', { required: true });
     const stopLabels = core
-        .getInput('stop-labels', { required: false, trimWhitespace: true })
+        .getInput('stop-labels')
         .toLowerCase()
         .split(',')
         .map((str) => str.trim());
@@ -29085,19 +29071,7 @@ async function main() {
     else {
         core.debug('skip approving this PR');
     }
-    const mergeQueueState = pr.mergeQueueEntry?.state ?? 'MERGEABLE';
-    if (mergeQueueState === 'MERGEABLE' || mergeQueueState === 'AWAITING_CHECKS') {
-        core.debug('time to enqueue this PR');
-        const enqueueResult = await enqueuePR(kit, { prId: pr.id });
-        if (!enqueueResult.enqueued) {
-            core.setFailed(`Could not enqueue PR #${pr.number}`);
-            return;
-        }
-    }
-    else {
-        console.log(pr);
-        core.setFailed('PR seems to be unmergeable');
-    }
+    await autoMergePr(kit, { prId: pr.id });
 }
 main().catch((e) => {
     core.setFailed(e);
