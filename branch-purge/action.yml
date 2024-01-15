@@ -1,0 +1,19 @@
+name: 'Branch Purge'
+description: 'Deletes the branch in a Swappie controlled fashion'
+inputs:
+  token:
+    description: 'Auth token'
+    required: true
+  repo:
+    description: 'Repository name'
+    required: true
+  owner:
+    description: 'Owner'
+    required: true
+  branch:
+    description: 'Branch to delete'
+    required: true
+# outputs:
+runs:
+  using: 'node20'
+  main: 'target/index.js'
