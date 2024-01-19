@@ -29026,6 +29026,21 @@ query ($owner: String!, $repo: String!, $branch: String!) {
         reviews: node.reviews?.nodes ?? [],
     };
 }
+function resolveAutoMerge(input) {
+    const opts = new Map([
+        ['yes', true],
+        ['true', true],
+        ['on', true],
+        ['no', false],
+        ['false', false],
+        ['off', false]
+    ]);
+    const autoMergeEnabled = opts.get(input.toLowerCase());
+    if (autoMergeEnabled === undefined) {
+        throw new Error(`auto-merge has invalid value (got "${input}"), possible values are: ${[...opts.keys()].join(', ')}`);
+    }
+    return autoMergeEnabled;
+}
 async function main() {
     const token = core.getInput('token', { required: true });
     const repo = core.getInput('repo', { required: true });
@@ -29036,6 +29051,7 @@ async function main() {
         .toLowerCase()
         .split(',')
         .map((str) => str.trim());
+    const shouldAutoMerge = resolveAutoMerge(core.getInput('auto-merge') || 'yes');
     const kit = github.getOctokit(token);
     const pr = await findPR(kit, { repo, owner, branch });
     if (!pr) {
@@ -29071,7 +29087,9 @@ async function main() {
     else {
         core.debug('skip approving this PR');
     }
-    await autoMergePr(kit, { prId: pr.id });
+    if (shouldAutoMerge) {
+        await autoMergePr(kit, { prId: pr.id });
+    }
 }
 main().catch((e) => {
     core.setFailed(e);

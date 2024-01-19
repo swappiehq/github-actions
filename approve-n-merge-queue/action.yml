@@ -13,6 +13,8 @@ inputs:
   branch:
     description: 'Branch to look out for automatically approve & merge'
     required: true
+  auto-merge:
+    description: 'Whether this action should enable auto merge or not'
   stop-labels:
     description: 'These labels indicate that PR approve & merge flow should be skiped'
     required: false
