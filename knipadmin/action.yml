@@ -5,5 +5,5 @@ inputs:
     description: 'Auth token'
     required: true
 runs:
-  using: 'node22'
+  using: 'node20'
   main: 'target/index.js'
