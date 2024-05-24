@@ -1,0 +1,9 @@
+name: 'Knip Admin'
+description: 'Stuff'
+inputs:
+  token:
+    description: 'Auth token'
+    required: true
+runs:
+  using: 'node22'
+  main: 'target/index.js'
