@@ -29225,6 +29225,8 @@ async function main() {
     const repo = core.getInput('repo', { required: true });
     const owner = core.getInput('owner', { required: true });
     const ref = core.getInput('ref', { required: true });
+    const baseReportPath = core.getInput('base-report', { required: true });
+    const nextReportPath = core.getInput('next-report', { required: true });
     const kit = github.getOctokit(token);
     const prId = ref.split('/')
         .map(it => parseInt(it, 10))
@@ -29233,7 +29235,6 @@ async function main() {
         throw new Error(`Could not parse .ref, got ${ref}`);
     }
     const pr = await findPR(kit, { repo, owner, prId });
-    console.log(pr);
 }
 main()
     .catch(console.error)

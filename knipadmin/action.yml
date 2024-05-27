@@ -12,6 +12,12 @@ inputs:
     required: true
   ref:
     description: 'Github ref'
+     required: true
+  base-report: 
+    description: 'Base report to compare against'
+    required: true
+  next-report:
+    description: 'Current report to compare'
     required: true
 runs:
   using: 'node20'

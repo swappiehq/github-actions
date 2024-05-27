@@ -1,13 +1,5 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import * as os from 'node:os'
-
-const tmpDir = os.tmpdir()
-
-const C_SECOND = 1_000
-const C_APP_TIMEOUT = 60 * C_SECOND
-
-type Tag = 'base' | 'next'
 
 type GenericIssue = {
   name: string
@@ -38,25 +30,14 @@ type Report = {
   issues: Issue[]
 }
 
-export async function knipadmin() {
-  const report = await tryReadStdin<Report>()
+type Opts = {
+  baseReportPath: string
+  nextReportPath: string
+}
 
-  if (!report) {
-    throw new Error('Could not read report from stdin')
-  }
-
-  const knipDir = path.join(tmpDir, 'knip')
-
-  await fs.mkdir(knipDir, { recursive: true })
-  const existingReports = await fs.readdir(knipDir)
-
-  if (existingReports.length === 0) {
-    const fullPath = await writeReport(knipDir, 'base', report)
-    console.log(`✅ Base report saved at ${fullPath}`)
-    return
-  }
-
-  const baseReport = await readReport(knipDir, 'base')
+export async function knipadmin(opts: Opts) {
+  const report = await parseReport(opts.nextReportPath)
+  const baseReport = await parseReport(opts.baseReportPath)
 
   const baseReportIssuesByFile = new Map(
     baseReport.issues.map(it => [it.file, it])
@@ -96,61 +77,8 @@ export async function knipadmin() {
   console.log(evidenceBook.dump())
 }
 
-async function readReport(baseDir: string, tag: Tag): Promise<Report> {
-  return JSON.parse(await fs.readFile(path.join(baseDir, createReportFilename(tag)), 'utf8'))
-}
-
-async function writeReport(baseDir: string, tag: Tag, report: Report) {
-  const content = Buffer.from(JSON.stringify(report))
-  const fullPath = path.join(baseDir, createReportFilename(tag))
-  await fs.writeFile(fullPath, content)
-  return fullPath
-}
-
-function createReportFilename(tag: Tag) {
-  return `issues.${tag}.json`
-}
-
-function tryReadStdin<T>(): Promise<T | undefined> {
-  const sleeping = sleep(C_APP_TIMEOUT)
-
-  return Promise.race([
-    sleeping.wait,
-    readStdin().then(it => {
-      sleeping.cancel()
-      return JSON.parse(it)
-    })
-  ])
-}
-
-function readStdin(): Promise<string> {
-  return new Promise((resolve) => {
-    process.stdin.setEncoding('utf8')
-    let buffer = ''
-    process.stdin.on('data', (chunk) => {
-      buffer += chunk
-    })
-    process.stdin.on('end', () => {
-      resolve(buffer)
-    })
-  })
-}
-
-function sleep(timeout: number) {
-  let id: NodeJS.Timeout | null = null
-
-  const promise = new Promise(resolve => {
-    id = setTimeout(() => resolve(undefined), timeout)
-  })
-
-  const self = {
-    wait: promise,
-    cancel() {
-      id?.unref()
-    }
-  }
-
-  return self
+async function parseReport(fullPath: string): Promise<Report> {
+  return JSON.parse(await fs.readFile(fullPath, 'utf8'))
 }
 
 class EvidenceBook {
