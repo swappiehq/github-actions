@@ -12,7 +12,7 @@ inputs:
     required: true
   ref:
     description: 'Github ref'
-     required: true
+    required: true
   base-report: 
     description: 'Base report to compare against'
     required: true
