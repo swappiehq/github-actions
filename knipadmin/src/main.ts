@@ -44,7 +44,24 @@ type CommentProps = {
   body: string
 }
 async function comment(kit: Octokit, { prId, body }: CommentProps) {
+  const query = `
+mutation ($subjectId: ID!, $body: String!) {
+  addComment(input: {
+    subjectId: $subjectId,
+    body: $body
+  }) {
+    clientMutationId
+  }
+}
+`
 
+  const res = await kit.graphql<{
+    addComment?: {
+      clientMutationId?: null
+    }
+  }>(query, { subjectId: prId, body })
+
+  return res.addComment
 }
 
 interface PrQuery {

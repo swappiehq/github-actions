@@ -29324,6 +29324,18 @@ main()
     console.timeEnd('Done');
 });
 async function comment(kit, { prId, body }) {
+    const query = `
+mutation ($subjectId: ID!, $body: String!) {
+  addComment(input: {
+    subjectId: $subjectId,
+    body: $body
+  }) {
+    clientMutationId
+  }
+}
+`;
+    const res = await kit.graphql(query, { subjectId: prId, body });
+    return res.addComment;
 }
 async function findPR(kit, { owner, repo, prNumber }) {
     const query = `
