@@ -1,4 +1,4 @@
-import * as fs from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 
 type GenericIssue = {
   name: string
@@ -77,7 +77,7 @@ export async function knipadmin(opts: Opts) {
 }
 
 async function parseReport(fullPath: string): Promise<Report> {
-  return JSON.parse(await fs.readFile(fullPath, 'utf8'))
+  return JSON.parse(await readFile(fullPath, 'utf8'))
 }
 
 class EvidenceBook {
