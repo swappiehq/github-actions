@@ -10,8 +10,8 @@ inputs:
   owner:
     description: 'Owner'
     required: true
-  branch:
-    description: 'Branch to look out for'
+  ref:
+    description: 'Github ref'
     required: true
 runs:
   using: 'node20'

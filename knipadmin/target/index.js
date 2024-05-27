@@ -29222,12 +29222,17 @@ const github = __importStar(__nccwpck_require__(5438));
 console.time('Done');
 async function main() {
     const token = core.getInput('token', { required: true });
-    console.log('hewo');
     const repo = core.getInput('repo', { required: true });
     const owner = core.getInput('owner', { required: true });
-    const branch = core.getInput('branch', { required: true });
+    const ref = core.getInput('ref', { required: true });
     const kit = github.getOctokit(token);
-    const pr = await findPR(kit, { repo, owner, branch });
+    const prId = ref.split('/')
+        .map(it => parseInt(it, 10))
+        .find(it => !isNaN(it));
+    if (!prId) {
+        throw new Error(`Could not parse .ref, got ${ref}`);
+    }
+    const pr = await findPR(kit, { repo, owner, prId });
     console.log(pr);
 }
 main()
@@ -29235,36 +29240,17 @@ main()
     .finally(() => {
     console.timeEnd('Done');
 });
-async function findPR(kit, { owner, repo, branch }) {
+async function findPR(kit, { owner, repo, prId }) {
     const query = `
-query ($owner: String!, $repo: String!, $branch: String!) {
+query ($owner: String!, $repo: String!, $prId: Int!) {
   repository(owner: $owner, name: $repo) {
-    pullRequests(
-      headRefName: $branch
-      first: 1
-      orderBy: {field: CREATED_AT, direction: DESC}
-    ) {
-      nodes {
-        id
-        createdAt
-        updatedAt
-        changedFiles
-        url
-        number
-        state
-        reviews(first: 30) {
-          nodes {
-            id
-            state
-          }
-        }
-        labels(first: 30) {
-          nodes {
-            id
-            name
-          }
-        }
+    pullRequest(number: $prId) {
+    	author {
+        login
       }
+      id
+      url
+      state
     }
   }
 }
@@ -29272,23 +29258,13 @@ query ($owner: String!, $repo: String!, $branch: String!) {
     const res = await kit.graphql(query, {
         owner,
         repo,
-        branch,
+        prId,
     });
-    const [node] = res.repository?.pullRequests?.nodes || [];
-    if (!node) {
-        return null;
+    const it = res?.repository?.pullRequests ?? null;
+    if (!it) {
+        throw new Error(`Could not find PR by the id ${prId}`);
     }
-    return {
-        id: node.id,
-        createdAt: node.createdAt,
-        updatedAt: node.updatedAt,
-        changedFiles: node.changedFiles,
-        url: node.url,
-        number: node.number,
-        state: node.state,
-        labels: node.labels?.nodes ?? [],
-        reviews: node.reviews?.nodes ?? [],
-    };
+    return it;
 }
 
 

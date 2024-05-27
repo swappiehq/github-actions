@@ -7,17 +7,21 @@ console.time('Done')
 
 async function main() {
   const token = core.getInput('token', { required: true })
-
-  console.log('hewo')
   const repo = core.getInput('repo', { required: true })
   const owner = core.getInput('owner', { required: true })
-  const branch = core.getInput('branch', { required: true })
+  const ref = core.getInput('ref', { required: true })
 
   const kit = github.getOctokit(token)
 
-  console.log(branch)
+  const prId: number | undefined = ref.split('/')
+    .map(it => parseInt(it, 10))
+    .find(it => !isNaN(it))
 
-  const pr = await findPR(kit, { repo, owner, branch })
+  if (!prId) {
+    throw new Error(`Could not parse .ref, got ${ref}`)
+  }
+
+  const pr = await findPR(kit, { repo, owner, prId })
 
   console.log(pr)
 }
@@ -31,38 +35,19 @@ main()
 interface FindPrProps {
   owner: string
   repo: string
-  branch: string
+  prId: number
 }
-async function findPR(kit: Octokit, { owner, repo, branch }: FindPrProps) {
+async function findPR(kit: Octokit, { owner, repo, prId }: FindPrProps) {
   const query = `
-query ($owner: String!, $repo: String!, $branch: String!) {
+query ($owner: String!, $repo: String!, $prId: Int!) {
   repository(owner: $owner, name: $repo) {
-    pullRequests(
-      headRefName: $branch
-      first: 1
-      orderBy: {field: CREATED_AT, direction: DESC}
-    ) {
-      nodes {
-        id
-        createdAt
-        updatedAt
-        changedFiles
-        url
-        number
-        state
-        reviews(first: 30) {
-          nodes {
-            id
-            state
-          }
-        }
-        labels(first: 30) {
-          nodes {
-            id
-            name
-          }
-        }
+    pullRequest(number: $prId) {
+    	author {
+        login
       }
+      id
+      url
+      state
     }
   }
 }
@@ -70,50 +55,25 @@ query ($owner: String!, $repo: String!, $branch: String!) {
   const res = await kit.graphql<{
     repository?: {
       pullRequests?: {
-        nodes: Array<{
-          id: string
-          createdAt: string
-          updatedAt: string
-          changedFiles: number
-          url: string
-          number: number
-          state: 'OPEN' | 'CLOSED' | 'MERGED'
-          reviews?: {
-            nodes: Array<{
-              id: string
-              state: 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED' | 'DISMISSED' | 'PENDING'
-            }>
-          }
-          labels?: {
-            nodes: Array<{
-              id: string
-              name: string
-            }>
-          }
-        }>
+        author: {
+          login: string
+        }
+        id: string
+        url: string
+        state: string
       }
     }
   }>(query, {
     owner,
     repo,
-    branch,
+    prId,
   })
 
-  const [node] = res.repository?.pullRequests?.nodes || []
+  const it = res?.repository?.pullRequests ?? null
 
-  if (!node) {
-    return null
+  if (!it) {
+    throw new Error(`Could not find PR by the id ${prId}`)
   }
 
-  return {
-    id: node.id,
-    createdAt: node.createdAt,
-    updatedAt: node.updatedAt,
-    changedFiles: node.changedFiles,
-    url: node.url,
-    number: node.number,
-    state: node.state,
-    labels: node.labels?.nodes ?? [],
-    reviews: node.reviews?.nodes ?? [],
-  }
+  return it
 }
