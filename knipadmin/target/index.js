@@ -29325,6 +29325,7 @@ async function main() {
     });
     const botComments = comments.data
         .filter(it => it.body.match('#knip'));
+    core.info(botComments.map(it => it.body).join("\n"));
     if (botComments.length > 0) {
         core.debug(`found ${botComments.length} knip bot comments on the PR`);
         core.debug(`deleting all knip bot comments`);
