@@ -29316,7 +29316,7 @@ async function main() {
         nextReportPath,
         baseReportPath,
     });
-    const comments = await kit.request('GET /repos/{owner}/{repo}/issues/comments', {
+    const comments = await kit.request('GET /repos/{owner}/{repo}/pulls/comments', {
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
         headers: {
