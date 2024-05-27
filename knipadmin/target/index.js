@@ -29260,7 +29260,7 @@ query ($owner: String!, $repo: String!, $prId: Int!) {
         repo,
         prId,
     });
-    const it = res?.repository?.pullRequests ?? null;
+    const it = res?.repository?.pullRequest ?? null;
     if (!it) {
         throw new Error(`Could not find PR by the id ${prId}`);
     }

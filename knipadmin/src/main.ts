@@ -54,7 +54,7 @@ query ($owner: String!, $repo: String!, $prId: Int!) {
 `
   const res = await kit.graphql<{
     repository?: {
-      pullRequests?: {
+      pullRequest?: {
         author: {
           login: string
         }
@@ -69,7 +69,7 @@ query ($owner: String!, $repo: String!, $prId: Int!) {
     prId,
   })
 
-  const it = res?.repository?.pullRequests ?? null
+  const it = res?.repository?.pullRequest ?? null
 
   if (!it) {
     throw new Error(`Could not find PR by the id ${prId}`)
