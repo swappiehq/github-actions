@@ -24,6 +24,11 @@ async function main() {
   }
 
   const pr = await findPR(kit, { repo, owner, prId })
+
+  await knipadmin({
+    nextReportPath,
+    baseReportPath,
+  })
 }
 
 main()

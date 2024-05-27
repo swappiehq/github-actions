@@ -29188,6 +29188,105 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 9730:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.knipadmin = void 0;
+const fs = __importStar(__nccwpck_require__(3977));
+async function knipadmin(opts) {
+    const report = await parseReport(opts.nextReportPath);
+    const baseReport = await parseReport(opts.baseReportPath);
+    const baseReportIssuesByFile = new Map(baseReport.issues.map(it => [it.file, it]));
+    const evidenceBook = new EvidenceBook();
+    for (const issue of report.issues) {
+        const baseIssue = baseReportIssuesByFile.get(issue.file);
+        // completely new file that has issues now
+        if (!baseIssue) {
+            evidenceBook.insert(issue.file, ['added', 'types', issue.types]);
+            evidenceBook.insert(issue.file, ['added', 'unresolved', issue.unresolved]);
+            evidenceBook.insert(issue.file, ['added', 'exports', issue.exports]);
+            continue;
+        }
+        for (const prop of ['types', 'exports', 'unresolved']) {
+            for (const typeIssue of issue[prop]) {
+                const knownIssue = baseIssue[prop].find(it => it.name === typeIssue.name);
+                if (!knownIssue) {
+                    evidenceBook.insert(issue.file, ['added', prop, [typeIssue]]);
+                }
+            }
+            for (const typeIssue of baseIssue[prop]) {
+                const knownIssue = issue[prop].find(it => it.name === typeIssue.name);
+                if (!knownIssue) {
+                    evidenceBook.insert(issue.file, ['deleted', prop, [typeIssue]]);
+                }
+            }
+        }
+    }
+    console.log(evidenceBook.dump());
+}
+exports.knipadmin = knipadmin;
+async function parseReport(fullPath) {
+    return JSON.parse(await fs.readFile(fullPath, 'utf8'));
+}
+class EvidenceBook {
+    /**
+    * file => Evidence
+    */
+    map = new Map();
+    set() {
+        throw new Error('use insert()');
+    }
+    insert(file, [action, kind, issues]) {
+        if (issues.length === 0) {
+            return;
+        }
+        const evs = this.get(file);
+        for (const issue of issues) {
+            evs.push([action, kind, issue]);
+        }
+    }
+    get(file) {
+        let value = this.map.get(file);
+        if (!value) {
+            value = [];
+            this.map.set(file, value);
+        }
+        return value;
+    }
+    dump() {
+        console.log(JSON.stringify(Object.fromEntries(this.map), null, 2));
+    }
+}
+
+
+/***/ }),
+
 /***/ 399:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -29219,6 +29318,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
+const lib_1 = __nccwpck_require__(9730);
 console.time('Done');
 async function main() {
     const token = core.getInput('token', { required: true });
@@ -29235,6 +29335,10 @@ async function main() {
         throw new Error(`Could not parse .ref, got ${ref}`);
     }
     const pr = await findPR(kit, { repo, owner, prId });
+    await (0, lib_1.knipadmin)({
+        nextReportPath,
+        baseReportPath,
+    });
 }
 main()
     .catch(console.error)
@@ -29372,6 +29476,14 @@ module.exports = require("net");
 
 "use strict";
 module.exports = require("node:events");
+
+/***/ }),
+
+/***/ 3977:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:fs/promises");
 
 /***/ }),
 
