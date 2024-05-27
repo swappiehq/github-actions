@@ -15,6 +15,8 @@ async function main() {
 
   const kit = github.getOctokit(token)
 
+  console.log(branch)
+
   const pr = await findPR(kit, { repo, owner, branch })
 
   console.log(pr)
