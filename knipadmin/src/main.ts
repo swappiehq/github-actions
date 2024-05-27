@@ -61,7 +61,7 @@ main()
 
 async function deleteComment(kit: Octokit, { id }: { id: number }) {
   await kit.request(
-    'DELETE /repos/{owner}/{repo}/issues/comments/{comment_id}',
+    'DELETE /repos/{owner}/{repo}/pulls/comments/{comment_id}',
     {
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,

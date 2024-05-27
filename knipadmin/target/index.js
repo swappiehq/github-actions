@@ -29340,7 +29340,7 @@ main()
     console.timeEnd('Done');
 });
 async function deleteComment(kit, { id }) {
-    await kit.request('DELETE /repos/{owner}/{repo}/issues/comments/{comment_id}', {
+    await kit.request('DELETE /repos/{owner}/{repo}/pulls/comments/{comment_id}', {
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
         comment_id: id
