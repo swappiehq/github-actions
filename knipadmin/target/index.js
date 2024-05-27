@@ -29316,6 +29316,23 @@ async function main() {
         nextReportPath,
         baseReportPath,
     });
+    const comments = await kit.request('GET /repos/{owner}/{repo}/issues/comments', {
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        headers: {
+            'X-GitHub-Api-Version': '2022-11-28'
+        }
+    });
+    const botComments = comments.data
+        .filter(it => it.user.login === 'github-actions')
+        .filter(it => it.body.match('#knip'));
+    if (botComments.length > 0) {
+        core.debug(`found ${botComments.length} knip bot comments on the PR`);
+        core.debug(`deleting all knip bot comments`);
+        for (const it of botComments) {
+            await deleteComment(kit, { id: it.id });
+        }
+    }
     await comment(kit, { prId: pr.id, body: json });
 }
 main()
@@ -29323,6 +29340,13 @@ main()
     .finally(() => {
     console.timeEnd('Done');
 });
+async function deleteComment(kit, { id }) {
+    await kit.request('DELETE /repos/{owner}/{repo}/issues/comments/{comment_id}', {
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        comment_id: id
+    });
+}
 async function comment(kit, { prId, body }) {
     const query = `
 mutation ($subjectId: ID!, $body: String!) {
@@ -29330,12 +29354,19 @@ mutation ($subjectId: ID!, $body: String!) {
     subjectId: $subjectId,
     body: $body
   }) {
-    clientMutationId
+    commentEdge {
+      node {
+        id
+      }
+    }
   }
 }
 `;
-    const res = await kit.graphql(query, { subjectId: prId, body });
-    return res.addComment;
+    const content = `${body}\n\n#knip`;
+    const res = await kit.graphql(query, { subjectId: prId, body: content });
+    return {
+        id: res?.addComment?.commentEdge?.node?.id,
+    };
 }
 async function findPR(kit, { owner, repo, prNumber }) {
     const query = `
