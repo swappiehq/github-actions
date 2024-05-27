@@ -29324,7 +29324,6 @@ async function main() {
         }
     });
     const botComments = comments.data
-        .filter(it => it.user.login === 'github-actions')
         .filter(it => it.body.match('#knip'));
     if (botComments.length > 0) {
         core.debug(`found ${botComments.length} knip bot comments on the PR`);
