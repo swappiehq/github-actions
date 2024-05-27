@@ -15,20 +15,22 @@ async function main() {
 
   const kit = github.getOctokit(token)
 
-  const prId: number | undefined = ref.split('/')
+  const prNumber: number | undefined = ref.split('/')
     .map(it => parseInt(it, 10))
     .find(it => !isNaN(it))
 
-  if (!prId) {
+  if (!prNumber) {
     throw new Error(`Could not parse .ref, got ${ref}`)
   }
 
-  const pr = await findPR(kit, { repo, owner, prId })
+  const pr = await findPR(kit, { repo, owner, prNumber })
 
-  await knipadmin({
+  const json = await knipadmin({
     nextReportPath,
     baseReportPath,
   })
+
+  await comment(kit, { prId: pr.id, body: json })
 }
 
 main()
@@ -37,16 +39,24 @@ main()
     console.timeEnd('Done')
   })
 
-interface FindPrProps {
+type CommentProps = {
+  prId: string
+  body: string
+}
+async function comment(kit: Octokit, { prId, body }: CommentProps) {
+
+}
+
+interface PrQuery {
   owner: string
   repo: string
-  prId: number
+  prNumber: number
 }
-async function findPR(kit: Octokit, { owner, repo, prId }: FindPrProps) {
+async function findPR(kit: Octokit, { owner, repo, prNumber }: PrQuery) {
   const query = `
-query ($owner: String!, $repo: String!, $prId: Int!) {
+query ($owner: String!, $repo: String!, $prNumber: Int!) {
   repository(owner: $owner, name: $repo) {
-    pullRequest(number: $prId) {
+    pullRequest(number: $prNumber) {
     	author {
         login
       }
@@ -71,13 +81,13 @@ query ($owner: String!, $repo: String!, $prId: Int!) {
   }>(query, {
     owner,
     repo,
-    prId,
+    prNumber,
   })
 
   const it = res?.repository?.pullRequest ?? null
 
   if (!it) {
-    throw new Error(`Could not find PR by the id ${prId}`)
+    throw new Error(`Could not find PR by the id ${prNumber}`)
   }
 
   return it

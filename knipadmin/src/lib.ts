@@ -73,7 +73,7 @@ export async function knipadmin(opts: Opts) {
     }
   }
 
-  console.log(evidenceBook.dump())
+  return evidenceBook.dump()
 }
 
 async function parseReport(fullPath: string): Promise<Report> {
@@ -112,6 +112,6 @@ class EvidenceBook {
   }
 
   dump() {
-    console.log(JSON.stringify(Object.fromEntries(this.map), null, 2))
+    return JSON.stringify(Object.fromEntries(this.map), null, 2)
   }
 }

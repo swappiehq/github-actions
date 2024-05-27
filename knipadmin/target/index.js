@@ -29225,7 +29225,7 @@ async function knipadmin(opts) {
             }
         }
     }
-    console.log(evidenceBook.dump());
+    return evidenceBook.dump();
 }
 exports.knipadmin = knipadmin;
 async function parseReport(fullPath) {
@@ -29257,7 +29257,7 @@ class EvidenceBook {
         return value;
     }
     dump() {
-        console.log(JSON.stringify(Object.fromEntries(this.map), null, 2));
+        return JSON.stringify(Object.fromEntries(this.map), null, 2);
     }
 }
 
@@ -29305,28 +29305,31 @@ async function main() {
     const baseReportPath = core.getInput('base-report', { required: true });
     const nextReportPath = core.getInput('next-report', { required: true });
     const kit = github.getOctokit(token);
-    const prId = ref.split('/')
+    const prNumber = ref.split('/')
         .map(it => parseInt(it, 10))
         .find(it => !isNaN(it));
-    if (!prId) {
+    if (!prNumber) {
         throw new Error(`Could not parse .ref, got ${ref}`);
     }
-    const pr = await findPR(kit, { repo, owner, prId });
-    await (0, lib_1.knipadmin)({
+    const pr = await findPR(kit, { repo, owner, prNumber });
+    const json = await (0, lib_1.knipadmin)({
         nextReportPath,
         baseReportPath,
     });
+    await comment(kit, { prId: pr.id, body: json });
 }
 main()
     .catch(console.error)
     .finally(() => {
     console.timeEnd('Done');
 });
-async function findPR(kit, { owner, repo, prId }) {
+async function comment(kit, { prId, body }) {
+}
+async function findPR(kit, { owner, repo, prNumber }) {
     const query = `
-query ($owner: String!, $repo: String!, $prId: Int!) {
+query ($owner: String!, $repo: String!, $prNumber: Int!) {
   repository(owner: $owner, name: $repo) {
-    pullRequest(number: $prId) {
+    pullRequest(number: $prNumber) {
     	author {
         login
       }
@@ -29340,11 +29343,11 @@ query ($owner: String!, $repo: String!, $prId: Int!) {
     const res = await kit.graphql(query, {
         owner,
         repo,
-        prId,
+        prNumber,
     });
     const it = res?.repository?.pullRequest ?? null;
     if (!it) {
-        throw new Error(`Could not find PR by the id ${prId}`);
+        throw new Error(`Could not find PR by the id ${prNumber}`);
     }
     return it;
 }
