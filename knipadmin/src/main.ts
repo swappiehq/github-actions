@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { knipadmin } from './lib'
+import { knipadmin } from './knipadmin'
 
 console.time('Done')
 
@@ -24,7 +24,7 @@ async function main() {
     throw new Error(`Could not parse .ref, got ${ref}`)
   }
 
-  const fileIssues = await knipadmin({
+  const book = await knipadmin({
     nextReportPath,
     baseReportPath,
   })
@@ -44,24 +44,16 @@ async function main() {
       owner,
       repo,
       issue_number: prNumber,
-      body: createBody(JSON.stringify({ counter: 0 })),
+      body: createBody(book.display()),
     })
   } else if (knips.length === 1) {
     const comment = knips[0]
-
-    if (!comment.body) {
-      throw new Error('no body')
-    }
-
-    const state = JSON.parse(comment.body.split('\n')[0]) as { counter: number }
-
-    state.counter += 1
 
     await kit.rest.issues.updateComment({
       owner,
       repo,
       comment_id: comment.id,
-      body: createBody(JSON.stringify(state))
+      body: createBody(book.display())
     })
   } else {
     throw new Error('somehow got more than 1 comments?')

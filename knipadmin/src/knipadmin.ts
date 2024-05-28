@@ -73,22 +73,18 @@ export async function knipadmin(opts: Opts) {
     }
   }
 
-  return evidenceBook.json()
+  return evidenceBook
 }
 
 async function parseReport(fullPath: string): Promise<Report> {
   return JSON.parse(await readFile(fullPath, 'utf8'))
 }
 
-class EvidenceBook {
+export class EvidenceBook {
   /**
   * file => Evidence
   */
   map: Map<string, Evidence[]> = new Map()
-
-  set(): never {
-    throw new Error('use insert()')
-  }
 
   insert(file: string, [action, kind, issues]: EvidenceInput) {
     if (issues.length === 0) {
@@ -117,5 +113,42 @@ class EvidenceBook {
 
   dump() {
     return JSON.stringify(this.json(), null, 2)
+  }
+
+  display(): string {
+    const fmt = new Fmt()
+
+    for (const [file, evs] of this.map) {
+      fmt.fire()
+      fmt.blank()
+      fmt.push(file)
+      fmt.eol()
+    }
+
+    return fmt.display.trim()
+  }
+}
+
+class Fmt {
+  static C_FIRE = '🔥'
+  static C_BLANK = ' '
+  static C_FEED = '\n'
+
+  display = ''
+
+  push(str: string) {
+    this.display += str.trim()
+  }
+
+  fire() {
+    this.display += Fmt.C_FIRE
+  }
+
+  blank() {
+    this.display += Fmt.C_BLANK
+  }
+
+  eol() {
+    this.display += Fmt.C_FEED
   }
 }

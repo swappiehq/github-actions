@@ -29188,13 +29188,13 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 9730:
+/***/ 7998:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.knipadmin = void 0;
+exports.EvidenceBook = exports.knipadmin = void 0;
 const promises_1 = __nccwpck_require__(3977);
 async function knipadmin(opts) {
     const report = await parseReport(opts.nextReportPath);
@@ -29225,7 +29225,7 @@ async function knipadmin(opts) {
             }
         }
     }
-    return evidenceBook.json();
+    return evidenceBook;
 }
 exports.knipadmin = knipadmin;
 async function parseReport(fullPath) {
@@ -29236,9 +29236,6 @@ class EvidenceBook {
     * file => Evidence
     */
     map = new Map();
-    set() {
-        throw new Error('use insert()');
-    }
     insert(file, [action, kind, issues]) {
         if (issues.length === 0) {
             return;
@@ -29261,6 +29258,35 @@ class EvidenceBook {
     }
     dump() {
         return JSON.stringify(this.json(), null, 2);
+    }
+    display() {
+        const fmt = new Fmt();
+        for (const [file, evs] of this.map) {
+            fmt.fire();
+            fmt.blank();
+            fmt.push(file);
+            fmt.eol();
+        }
+        return fmt.display.trim();
+    }
+}
+exports.EvidenceBook = EvidenceBook;
+class Fmt {
+    static C_FIRE = '🔥';
+    static C_BLANK = ' ';
+    static C_FEED = '\n';
+    display = '';
+    push(str) {
+        this.display += str.trim();
+    }
+    fire() {
+        this.display += Fmt.C_FIRE;
+    }
+    blank() {
+        this.display += Fmt.C_BLANK;
+    }
+    eol() {
+        this.display += Fmt.C_FEED;
     }
 }
 
@@ -29298,7 +29324,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
-const lib_1 = __nccwpck_require__(9730);
+const knipadmin_1 = __nccwpck_require__(7998);
 console.time('Done');
 const C_KNIP_REGEXP = /#knip/;
 async function main() {
@@ -29314,7 +29340,7 @@ async function main() {
     if (!prNumber) {
         throw new Error(`Could not parse .ref, got ${ref}`);
     }
-    const fileIssues = await (0, lib_1.knipadmin)({
+    const book = await (0, knipadmin_1.knipadmin)({
         nextReportPath,
         baseReportPath,
     });
@@ -29331,21 +29357,16 @@ async function main() {
             owner,
             repo,
             issue_number: prNumber,
-            body: createBody(JSON.stringify({ counter: 0 })),
+            body: createBody(book.display()),
         });
     }
     else if (knips.length === 1) {
         const comment = knips[0];
-        if (!comment.body) {
-            throw new Error('no body');
-        }
-        const state = JSON.parse(comment.body.split('\n')[0]);
-        state.counter += 1;
         await kit.rest.issues.updateComment({
             owner,
             repo,
             comment_id: comment.id,
-            body: createBody(JSON.stringify(state))
+            body: createBody(book.display())
         });
     }
     else {
