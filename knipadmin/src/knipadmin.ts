@@ -134,7 +134,50 @@ export class EvidenceBook {
   }
 
   display(): string {
+    const added = [...this.map.values()]
+      .flatMap(it => it)
+      .reduce((acc, it) => {
+        return it[0] === 'added' ? acc + 1 : acc
+      }, 0)
+
+    const deleted = [...this.map.values()]
+      .flatMap(it => it)
+      .reduce((acc, it) => {
+        return it[0] === 'deleted' ? acc + 1 : acc
+      }, 0)
+
+    if (added === 0 && deleted === 0) {
+      return ''
+    }
+
     const fmt = new Fmt()
+
+    fmt.push('Hello there!').eol().eol()
+
+    fmt.push('These are dead code related issues associated with this PR (previously known as `ts-prune`, now `knip` ✂️).')
+    fmt.push('You are not required to fix those issues, as they are strictly speaking represent code quality and code smell rather than critical issues with the code itself.')
+    fmt.push('However, it would be really nice of you would not leave any new issues behind. If you see').fire().push('anywhere below it means you most likely did.')
+
+    fmt.eol().eol()
+
+    if (deleted > 0) {
+      fmt.push(`❤️❤️❤️ Thank you so much for fixing ${deleted} issues, that is very much appreciated!`).eol().eol()
+    }
+
+    fmt
+      .italic('Note, it is possible that some of the issues below are not directly caused by the changes made with this PR in which case ignore this block or try to update the branch')
+      .eol()
+
+    if (added > 0) {
+      fmt.line(() => {
+        fmt.quote().code(`+${added} issues`)
+      })
+    }
+    if (deleted > 0) {
+      fmt.line(() => {
+        fmt.quote().code(`-${deleted} issues`)
+      })
+    }
 
     for (const [file, evs] of this.map) {
       if (evs.length === 0) {
@@ -143,23 +186,9 @@ export class EvidenceBook {
 
       evs.sort((a, b) => sortableActionRatio(a[0]) - sortableActionRatio(b[0]))
 
-      const added = evs.filter(it => it[0] === 'added')
-      const deleted = evs.filter(it => it[0] === 'deleted')
-
       fmt.line(() => {
         fmt.h3().book().code(file)
       })
-
-      if (added.length > 0) {
-        fmt.line(() => {
-          fmt.quote().code(`+${added.length} issues`)
-        })
-      }
-      if (deleted.length > 0) {
-        fmt.line(() => {
-          fmt.quote().code(`-${deleted.length} issues`)
-        })
-      }
 
       for (const it of evs) {
         const [action, issueType, issue] = it
@@ -198,6 +227,7 @@ export class Fmt {
 
   line(fn: () => void) {
     fn()
+    this.trimEnd()
     this.eol()
     return this
   }
@@ -232,11 +262,23 @@ export class Fmt {
     return this
   }
 
+  italic(str: string) {
+    this.display += '_' + str.trim() + '_'
+    this._()
+    return this
+  }
+
   brackets(fn: () => void) {
     this.display += '('
     fn()
+    this.trimEnd()
     this.display += ')'
     this._()
+    return this
+  }
+
+  trimEnd() {
+    this.display.trimEnd()
     return this
   }
 
