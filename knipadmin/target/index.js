@@ -29265,9 +29265,15 @@ class EvidenceBook {
     display() {
         const fmt = new Fmt();
         for (const [file, evs] of this.map) {
+            const addedCount = evs.filter(it => it[0] === 'added');
+            const deletedCount = evs.filter(it => it[0] === 'deleted');
             fmt.book();
             fmt._();
-            fmt.push(file);
+            fmt.code(file);
+            fmt._();
+            fmt.brackets(() => {
+                fmt.push(`${addedCount} new issues, ${deletedCount} fixed`);
+            });
             fmt.eol();
         }
         return fmt.display.trim();
@@ -29278,6 +29284,14 @@ class Fmt {
     display = '';
     push(str) {
         this.display += str.trim();
+    }
+    brackets(fn) {
+        this.display += '(';
+        fn();
+        this.display += ')';
+    }
+    code(str) {
+        this.display += '`' + str.trim() + '`';
     }
     rocket() {
         this.display += '🚀';

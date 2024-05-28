@@ -123,9 +123,16 @@ export class EvidenceBook {
     const fmt = new Fmt()
 
     for (const [file, evs] of this.map) {
+      const addedCount = evs.filter(it => it[0] === 'added')
+      const deletedCount = evs.filter(it => it[0] === 'deleted')
+
       fmt.book()
       fmt._()
-      fmt.push(file)
+      fmt.code(file)
+      fmt._()
+      fmt.brackets(() => {
+        fmt.push(`${addedCount} new issues, ${deletedCount} fixed`)
+      })
       fmt.eol()
     }
 
@@ -138,6 +145,16 @@ export class Fmt {
 
   push(str: string) {
     this.display += str.trim()
+  }
+
+  brackets(fn: () => void) {
+    this.display += '('
+    fn()
+    this.display += ')'
+  }
+
+  code(str: string) {
+    this.display += '`' + str.trim() + '`'
   }
 
   rocket() {
