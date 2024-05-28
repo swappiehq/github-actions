@@ -29313,9 +29313,6 @@ class EvidenceBook {
                 fmt.quote().code(`-${deleted} issues`);
             });
         }
-        fmt.line(() => {
-            fmt.push(`Now let's see what are the issues that were added or deleted per file:`);
-        });
         for (const [file, evs] of this.map) {
             if (evs.length === 0) {
                 continue;
