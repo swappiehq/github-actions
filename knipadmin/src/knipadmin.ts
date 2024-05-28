@@ -152,7 +152,7 @@ export class EvidenceBook {
       }, 0)
 
     if (added === 0 && deleted === 0) {
-      return ''
+      return '✂️ `knip`: no issues were fixed nor added!'
     }
 
     const fmt = new Fmt()

@@ -29287,7 +29287,7 @@ class EvidenceBook {
             return it[0] === 'deleted' ? acc + 1 : acc;
         }, 0);
         if (added === 0 && deleted === 0) {
-            return '';
+            return '✂️ `knip`: no issues were fixed nor added!';
         }
         const fmt = new Fmt();
         fmt.push('Hello there!').eol(2);
@@ -29508,21 +29508,6 @@ async function main() {
         prNumber,
         kit
     });
-    if (book.isEmpty()) {
-        // delete all related #knip comments if book is empty
-        // because otherwise there is nothing to report on:
-        // no issues were added or fixed
-        core.debug('book is empty');
-        for (const it of knipComments) {
-            core.debug(`deleting ${it.id} comment`);
-            await kit.rest.issues.deleteComment({
-                owner,
-                repo,
-                comment_id: it.id,
-            });
-        }
-        return;
-    }
     const body = createBody(book.display({
         displayCommit: commit.slice(0, 7),
         commitUrl: `https://github.com/${owner}/${repo}/pull/${prNumber}/commits/${commit}`
