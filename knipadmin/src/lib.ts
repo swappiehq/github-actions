@@ -73,7 +73,7 @@ export async function knipadmin(opts: Opts) {
     }
   }
 
-  return evidenceBook.dump()
+  return evidenceBook.json()
 }
 
 async function parseReport(fullPath: string): Promise<Report> {
@@ -111,7 +111,11 @@ class EvidenceBook {
     return value
   }
 
+  json() {
+    return Object.fromEntries(this.map)
+  }
+
   dump() {
-    return JSON.stringify(Object.fromEntries(this.map), null, 2)
+    return JSON.stringify(this.json(), null, 2)
   }
 }

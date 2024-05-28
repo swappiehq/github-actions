@@ -1,17 +1,18 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { Octokit } from '@octokit/core'
 import { knipadmin } from './lib'
 
 console.time('Done')
 
+const C_KNIP_REGEXP = /#knip/
+
 async function main() {
   const token = core.getInput('token', { required: true })
-  const repo = core.getInput('repo', { required: true })
-  const owner = core.getInput('owner', { required: true })
   const ref = core.getInput('ref', { required: true })
   const baseReportPath = core.getInput('base-report', { required: true })
   const nextReportPath = core.getInput('next-report', { required: true })
+
+  const { owner, repo } = github.context.repo
 
   const kit = github.getOctokit(token)
 
@@ -23,36 +24,48 @@ async function main() {
     throw new Error(`Could not parse .ref, got ${ref}`)
   }
 
-  const pr = await findPR(kit, { repo, owner, prNumber })
-
-  const json = await knipadmin({
+  const fileIssues = await knipadmin({
     nextReportPath,
     baseReportPath,
   })
 
-  const comments = await kit.request('GET /repos/{owner}/{repo}/pulls/comments', {
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    headers: {
-      'X-GitHub-Api-Version': '2022-11-28'
-    }
+  const comments = await kit.rest.issues.listComments({
+    owner,
+    repo,
+    issue_number: prNumber,
   })
 
-  const botComments = comments.data
-    .filter(it => it.body.match('#knip'))
+  const knips = comments.data
+    .filter(it => it.performed_via_github_app?.slug === 'github-actions')
+    .filter(it => C_KNIP_REGEXP.test(it.body ?? ''))
 
-  core.info(botComments.map(it => it.body).join("\n"))
+  if (knips.length === 0) {
+    await kit.rest.issues.createComment({
+      owner,
+      repo,
+      issue_number: prNumber,
+      body: createBody(JSON.stringify({ counter: 0 })),
+    })
+  } else if (knips.length === 1) {
+    const comment = knips[0]
 
-  if (botComments.length > 0) {
-    core.debug(`found ${botComments.length} knip bot comments on the PR`)
-    core.debug(`deleting all knip bot comments`)
-
-    for (const it of botComments) {
-      await deleteComment(kit, { id: it.id })
+    if (!comment.body) {
+      throw new Error('no body')
     }
-  }
 
-  await comment(kit, { prId: pr.id, body: json })
+    const state = JSON.parse(comment.body.split('\n')[0]) as { counter: number }
+
+    state.counter += 1
+
+    await kit.rest.issues.updateComment({
+      owner,
+      repo,
+      comment_id: comment.id,
+      body: createBody(JSON.stringify(state))
+    })
+  } else {
+    throw new Error('somehow got more than 1 comments?')
+  }
 }
 
 main()
@@ -61,96 +74,6 @@ main()
     console.timeEnd('Done')
   })
 
-async function deleteComment(kit: Octokit, { id }: { id: number }) {
-  await kit.request(
-    'DELETE /repos/{owner}/{repo}/pulls/comments/{comment_id}',
-    {
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      comment_id: id
-    }
-  )
-}
-
-type CommentProps = {
-  prId: string
-  body: string
-}
-async function comment(kit: Octokit, { prId, body }: CommentProps) {
-  const query = `
-mutation ($subjectId: ID!, $body: String!) {
-  addComment(input: {
-    subjectId: $subjectId,
-    body: $body
-  }) {
-    commentEdge {
-      node {
-        id
-      }
-    }
-  }
-}
-`
-
-  const content = `${body}\n\n#knip`
-
-  const res = await kit.graphql<{
-    addComment?: {
-      commentEdge?: {
-        node?: {
-          id: string
-        }
-      }
-    }
-  }>(query, { subjectId: prId, body: content })
-
-  return {
-    id: res?.addComment?.commentEdge?.node?.id,
-  }
-}
-
-interface PrQuery {
-  owner: string
-  repo: string
-  prNumber: number
-}
-async function findPR(kit: Octokit, { owner, repo, prNumber }: PrQuery) {
-  const query = `
-query ($owner: String!, $repo: String!, $prNumber: Int!) {
-  repository(owner: $owner, name: $repo) {
-    pullRequest(number: $prNumber) {
-    	author {
-        login
-      }
-      id
-      url
-      state
-    }
-  }
-}
-`
-  const res = await kit.graphql<{
-    repository?: {
-      pullRequest?: {
-        author: {
-          login: string
-        }
-        id: string
-        url: string
-        state: string
-      }
-    }
-  }>(query, {
-    owner,
-    repo,
-    prNumber,
-  })
-
-  const it = res?.repository?.pullRequest ?? null
-
-  if (!it) {
-    throw new Error(`Could not find PR by the id ${prNumber}`)
-  }
-
-  return it
+function createBody(body: string) {
+  return body.trim() + '\n\n#knip'
 }

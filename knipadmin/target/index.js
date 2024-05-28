@@ -29225,7 +29225,7 @@ async function knipadmin(opts) {
             }
         }
     }
-    return evidenceBook.dump();
+    return evidenceBook.json();
 }
 exports.knipadmin = knipadmin;
 async function parseReport(fullPath) {
@@ -29256,8 +29256,11 @@ class EvidenceBook {
         }
         return value;
     }
+    json() {
+        return Object.fromEntries(this.map);
+    }
     dump() {
-        return JSON.stringify(Object.fromEntries(this.map), null, 2);
+        return JSON.stringify(this.json(), null, 2);
     }
 }
 
@@ -29297,13 +29300,13 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const lib_1 = __nccwpck_require__(9730);
 console.time('Done');
+const C_KNIP_REGEXP = /#knip/;
 async function main() {
     const token = core.getInput('token', { required: true });
-    const repo = core.getInput('repo', { required: true });
-    const owner = core.getInput('owner', { required: true });
     const ref = core.getInput('ref', { required: true });
     const baseReportPath = core.getInput('base-report', { required: true });
     const nextReportPath = core.getInput('next-report', { required: true });
+    const { owner, repo } = github.context.repo;
     const kit = github.getOctokit(token);
     const prNumber = ref.split('/')
         .map(it => parseInt(it, 10))
@@ -29311,88 +29314,51 @@ async function main() {
     if (!prNumber) {
         throw new Error(`Could not parse .ref, got ${ref}`);
     }
-    const pr = await findPR(kit, { repo, owner, prNumber });
-    const json = await (0, lib_1.knipadmin)({
+    const fileIssues = await (0, lib_1.knipadmin)({
         nextReportPath,
         baseReportPath,
     });
-    const comments = await kit.request('GET /repos/{owner}/{repo}/pulls/comments', {
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        headers: {
-            'X-GitHub-Api-Version': '2022-11-28'
-        }
+    const comments = await kit.rest.issues.listComments({
+        owner,
+        repo,
+        issue_number: prNumber,
     });
-    const botComments = comments.data
-        .filter(it => it.body.match('#knip'));
-    core.info(botComments.map(it => it.body).join("\n"));
-    if (botComments.length > 0) {
-        core.debug(`found ${botComments.length} knip bot comments on the PR`);
-        core.debug(`deleting all knip bot comments`);
-        for (const it of botComments) {
-            await deleteComment(kit, { id: it.id });
-        }
+    const knips = comments.data
+        .filter(it => it.performed_via_github_app?.slug === 'github-actions')
+        .filter(it => C_KNIP_REGEXP.test(it.body ?? ''));
+    if (knips.length === 0) {
+        await kit.rest.issues.createComment({
+            owner,
+            repo,
+            issue_number: prNumber,
+            body: createBody(JSON.stringify({ counter: 0 })),
+        });
     }
-    await comment(kit, { prId: pr.id, body: json });
+    else if (knips.length === 1) {
+        const comment = knips[0];
+        if (!comment.body) {
+            throw new Error('no body');
+        }
+        const state = JSON.parse(comment.body.split('\n')[0]);
+        state.counter += 1;
+        await kit.rest.issues.updateComment({
+            owner,
+            repo,
+            comment_id: comment.id,
+            body: createBody(JSON.stringify(state))
+        });
+    }
+    else {
+        throw new Error('somehow got more than 1 comments?');
+    }
 }
 main()
     .catch(console.error)
     .finally(() => {
     console.timeEnd('Done');
 });
-async function deleteComment(kit, { id }) {
-    await kit.request('DELETE /repos/{owner}/{repo}/pulls/comments/{comment_id}', {
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        comment_id: id
-    });
-}
-async function comment(kit, { prId, body }) {
-    const query = `
-mutation ($subjectId: ID!, $body: String!) {
-  addComment(input: {
-    subjectId: $subjectId,
-    body: $body
-  }) {
-    commentEdge {
-      node {
-        id
-      }
-    }
-  }
-}
-`;
-    const content = `${body}\n\n#knip`;
-    const res = await kit.graphql(query, { subjectId: prId, body: content });
-    return {
-        id: res?.addComment?.commentEdge?.node?.id,
-    };
-}
-async function findPR(kit, { owner, repo, prNumber }) {
-    const query = `
-query ($owner: String!, $repo: String!, $prNumber: Int!) {
-  repository(owner: $owner, name: $repo) {
-    pullRequest(number: $prNumber) {
-    	author {
-        login
-      }
-      id
-      url
-      state
-    }
-  }
-}
-`;
-    const res = await kit.graphql(query, {
-        owner,
-        repo,
-        prNumber,
-    });
-    const it = res?.repository?.pullRequest ?? null;
-    if (!it) {
-        throw new Error(`Could not find PR by the id ${prNumber}`);
-    }
-    return it;
+function createBody(body) {
+    return body.trim() + '\n\n#knip';
 }
 
 
