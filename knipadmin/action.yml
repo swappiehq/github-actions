@@ -10,6 +10,9 @@ inputs:
   next-report:
     description: 'Current report to compare'
     required: true
+  commit:
+    description: 'Commit'
+    required: true
 runs:
   using: 'node20'
   main: 'target/index.js'
