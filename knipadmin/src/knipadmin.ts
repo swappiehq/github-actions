@@ -218,9 +218,7 @@ export class EvidenceBook {
     fmt.eol(2)
 
     if (deleted > 0) {
-      fmt.line(() => {
-        fmt.push(`❤️‍🩹 Thank you for fixing ${deleted} issues, very much appreciated!`)
-      }).eol()
+      fmt.push(`❤️‍🩹 Thank you for fixing ${deleted} issues, very much appreciated!`).eol(2)
     }
 
     fmt.line(() => {

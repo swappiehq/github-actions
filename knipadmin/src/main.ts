@@ -57,6 +57,16 @@ async function main() {
   } else {
     throw new Error('somehow got more than 1 comments?')
   }
+
+  const added = [...book.map.values()].flatMap(it => it).filter(it => it[0] === 'added')
+
+  if (added.length > 0) {
+    core.setFailed(added.map(it => {
+      const [, issueType, issue] = it
+
+      return `${issueType}: ${issue.name}:${issue.line}`
+    }).join('\n'))
+  }
 }
 
 main()
