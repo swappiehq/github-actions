@@ -29530,12 +29530,20 @@ async function main() {
     else {
         throw new Error('somehow got more than 1 comments?');
     }
-    const added = [...book.map.values()].flatMap(it => it).filter(it => it[0] === 'added');
-    if (added.length > 0) {
-        core.setFailed(added.map(it => {
-            const [, issueType, issue] = it;
-            return `${issueType}: ${issue.name}:${issue.line}`;
-        }).join('\n'));
+    if (!book.isEmpty()) {
+        let added = 0;
+        for (const [file, evs] of book.map.entries()) {
+            for (const ev of evs) {
+                const [action, issueType, issue] = ev;
+                if (action === 'added') {
+                    added += 1;
+                    core.info(`- ${file} has issue "${issueType}" for ${issue.name} (${issue.line}:${issue.col})`);
+                }
+            }
+        }
+        if (added > 0) {
+            core.setFailed(`Failed because this PR added knip issues`);
+        }
     }
 }
 main()
