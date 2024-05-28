@@ -29275,7 +29275,7 @@ class EvidenceBook {
     isEmpty() {
         return this.map.size === 0;
     }
-    display(commit) {
+    display({ commitUrl, displayCommit }) {
         const added = [...this.map.values()]
             .flatMap(it => it)
             .reduce((acc, it) => {
@@ -29298,11 +29298,6 @@ class EvidenceBook {
         fmt
             .italic('Note, it is possible that some of the issues below are not directly caused by the changes made with this PR in which case ignore this block or try to update the branch')
             .eol(2);
-        if (added > 0 || deleted > 0) {
-            fmt.line(() => {
-                fmt.push('This is a quick overview of how much issues were added vs fixed:');
-            });
-        }
         if (added > 0) {
             fmt.line(() => {
                 fmt.quote().code(`+${added} issues`);
@@ -29349,7 +29344,7 @@ class EvidenceBook {
         }
         fmt.eol();
         fmt.line(() => {
-            fmt.push('This report is generated against').code(commit);
+            fmt.push('This report is generated against').link(displayCommit, commitUrl);
         });
         return fmt.display.trim();
     }
@@ -29357,6 +29352,11 @@ class EvidenceBook {
 exports.EvidenceBook = EvidenceBook;
 class Fmt {
     display = '';
+    link(text, url) {
+        this._();
+        this.display += `[${text}](${url})`;
+        return this;
+    }
     line(fn) {
         fn();
         this.trimEnd();
@@ -29430,6 +29430,7 @@ class Fmt {
         return this;
     }
     eol(repeat = 1) {
+        this.trimEnd();
         for (const _ of Array(repeat).fill(undefined)) {
             this.display += '\n';
         }
@@ -29520,7 +29521,10 @@ async function main() {
         }
         return;
     }
-    const body = createBody(book.display(commit));
+    const body = createBody(book.display({
+        displayCommit: commit.slice(0, 7),
+        commitUrl: `https://github.com/${owner}/${repo}/pull/${prNumber}/commits/${commit}`
+    }));
     if (knipComments.length === 0) {
         await kit.rest.issues.createComment({
             owner,

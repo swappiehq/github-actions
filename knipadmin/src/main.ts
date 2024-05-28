@@ -51,7 +51,10 @@ async function main() {
     return
   }
 
-  const body = createBody(book.display(commit))
+  const body = createBody(book.display({
+    displayCommit: commit.slice(0, 7),
+    commitUrl: `https://github.com/${owner}/${repo}/pull/${prNumber}/commits/${commit}`
+  }))
 
   if (knipComments.length === 0) {
     await kit.rest.issues.createComment({

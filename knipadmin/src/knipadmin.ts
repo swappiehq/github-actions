@@ -94,6 +94,11 @@ async function parseReport(fullPath: string): Promise<Report> {
   return JSON.parse(await readFile(fullPath, 'utf8'))
 }
 
+type DisplayProps = {
+  commitUrl: string
+  displayCommit: string
+}
+
 export class EvidenceBook {
   /**
   * file => Evidence
@@ -133,7 +138,7 @@ export class EvidenceBook {
     return this.map.size === 0
   }
 
-  display(commit: string): string {
+  display({ commitUrl, displayCommit }: DisplayProps): string {
     const added = [...this.map.values()]
       .flatMap(it => it)
       .reduce((acc, it) => {
@@ -164,11 +169,6 @@ export class EvidenceBook {
       .italic('Note, it is possible that some of the issues below are not directly caused by the changes made with this PR in which case ignore this block or try to update the branch')
       .eol(2)
 
-    if (added > 0 || deleted > 0) {
-      fmt.line(() => {
-        fmt.push('This is a quick overview of how much issues were added vs fixed:')
-      })
-    }
     if (added > 0) {
       fmt.line(() => {
         fmt.quote().code(`+${added} issues`)
@@ -222,7 +222,7 @@ export class EvidenceBook {
     fmt.eol()
 
     fmt.line(() => {
-      fmt.push('This report is generated against').code(commit)
+      fmt.push('This report is generated against').link(displayCommit, commitUrl)
     })
 
     return fmt.display.trim()
@@ -231,6 +231,12 @@ export class EvidenceBook {
 
 export class Fmt {
   display = ''
+
+  link(text: string, url: string) {
+    this._()
+    this.display += `[${text}](${url})`
+    return this
+  }
 
   line(fn: () => void) {
     fn()
@@ -319,6 +325,7 @@ export class Fmt {
   }
 
   eol(repeat = 1) {
+    this.trimEnd()
     for (const _ of Array(repeat).fill(undefined)) {
       this.display += '\n'
     }
