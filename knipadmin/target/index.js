@@ -29275,7 +29275,7 @@ class EvidenceBook {
     isEmpty() {
         return this.map.size === 0;
     }
-    display() {
+    display(commit) {
         const added = [...this.map.values()]
             .flatMap(it => it)
             .reduce((acc, it) => {
@@ -29295,12 +29295,14 @@ class EvidenceBook {
         fmt.push('You are not required to fix those issues, as they are strictly speaking represent code quality and code smell rather than critical issues with the code itself.');
         fmt.push('However, it would be really nice of you would not leave any new issues behind. If you see').fire().push('anywhere below it means you most likely did.');
         fmt.eol().eol();
-        if (deleted > 0) {
-            fmt.push(`❤️❤️❤️ Thank you so much for fixing ${deleted} issues, that is very much appreciated!`).eol().eol();
-        }
         fmt
             .italic('Note, it is possible that some of the issues below are not directly caused by the changes made with this PR in which case ignore this block or try to update the branch')
             .eol();
+        if (added > 0 || deleted > 0) {
+            fmt.line(() => {
+                fmt.push('This is a quick overview of how much issues were added vs fixed:');
+            });
+        }
         if (added > 0) {
             fmt.line(() => {
                 fmt.quote().code(`+${added} issues`);
@@ -29311,13 +29313,16 @@ class EvidenceBook {
                 fmt.quote().code(`-${deleted} issues`);
             });
         }
+        fmt.line(() => {
+            fmt.push(`Now let's see what are the issues that were added or deleted per file:`);
+        });
         for (const [file, evs] of this.map) {
             if (evs.length === 0) {
                 continue;
             }
-            evs.sort((a, b) => sortableActionRatio(a[0]) - sortableActionRatio(b[0]));
+            evs.sort((a, b) => sortableActionRatio(b[0]) - sortableActionRatio(a[0]));
             fmt.line(() => {
-                fmt.h3().book().code(file);
+                fmt.h4().book().code(file);
             });
             for (const it of evs) {
                 const [action, issueType, issue] = it;
@@ -29345,6 +29350,9 @@ class EvidenceBook {
                 }
             }
         }
+        fmt.line(() => {
+            fmt.push('This report is generated against').code(commit);
+        });
         return fmt.display.trim();
     }
 }
@@ -29396,7 +29404,7 @@ class Fmt {
         return this;
     }
     trimEnd() {
-        this.display.trimEnd();
+        this.display = this.display.trimEnd();
         return this;
     }
     code(str) {
@@ -29477,11 +29485,10 @@ const knipadmin_1 = __nccwpck_require__(7998);
 console.time('Done');
 async function main() {
     const token = core.getInput('token', { required: true });
-    const ref = core.getInput('ref', { required: true });
     const baseReportPath = core.getInput('base-report', { required: true });
     const nextReportPath = core.getInput('next-report', { required: true });
-    const { owner, repo } = github.context.repo;
-    const kit = github.getOctokit(token);
+    const { repo: { owner, repo }, sha, ref } = github.context;
+    const shortCommit = sha.slice(0, 7);
     const prNumber = computePrNumber(ref);
     if (!prNumber) {
         core.setFailed('Could not parse .ref into a pr number');
@@ -29491,6 +29498,7 @@ async function main() {
         nextReportPath,
         baseReportPath,
     });
+    const kit = github.getOctokit(token);
     const knipComments = await findKnipComments({
         repo,
         owner,
@@ -29512,7 +29520,7 @@ async function main() {
         }
         return;
     }
-    const body = createBody(book.display());
+    const body = createBody(book.display(shortCommit));
     if (knipComments.length === 0) {
         await kit.rest.issues.createComment({
             owner,

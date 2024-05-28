@@ -6,14 +6,12 @@ console.time('Done')
 
 async function main() {
   const token = core.getInput('token', { required: true })
-  const ref = core.getInput('ref', { required: true })
   const baseReportPath = core.getInput('base-report', { required: true })
   const nextReportPath = core.getInput('next-report', { required: true })
 
-  const { owner, repo } = github.context.repo
+  const { repo: { owner, repo }, sha, ref } = github.context
 
-  const kit = github.getOctokit(token)
-
+  const shortCommit = sha.slice(0, 7)
   const prNumber = computePrNumber(ref)
 
   if (!prNumber) {
@@ -25,6 +23,8 @@ async function main() {
     nextReportPath,
     baseReportPath,
   })
+
+  const kit = github.getOctokit(token)
 
   const knipComments = await findKnipComments({
     repo,
@@ -51,7 +51,7 @@ async function main() {
     return
   }
 
-  const body = createBody(book.display())
+  const body = createBody(book.display(shortCommit))
 
   if (knipComments.length === 0) {
     await kit.rest.issues.createComment({

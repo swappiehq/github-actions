@@ -133,7 +133,7 @@ export class EvidenceBook {
     return this.map.size === 0
   }
 
-  display(): string {
+  display(commit: string): string {
     const added = [...this.map.values()]
       .flatMap(it => it)
       .reduce((acc, it) => {
@@ -160,14 +160,15 @@ export class EvidenceBook {
 
     fmt.eol().eol()
 
-    if (deleted > 0) {
-      fmt.push(`❤️❤️❤️ Thank you so much for fixing ${deleted} issues, that is very much appreciated!`).eol().eol()
-    }
-
     fmt
       .italic('Note, it is possible that some of the issues below are not directly caused by the changes made with this PR in which case ignore this block or try to update the branch')
       .eol()
 
+    if (added > 0 || deleted > 0) {
+      fmt.line(() => {
+        fmt.push('This is a quick overview of how much issues were added vs fixed:')
+      })
+    }
     if (added > 0) {
       fmt.line(() => {
         fmt.quote().code(`+${added} issues`)
@@ -179,15 +180,19 @@ export class EvidenceBook {
       })
     }
 
+    fmt.line(() => {
+      fmt.push(`Now let's see what are the issues that were added or deleted per file:`)
+    })
+
     for (const [file, evs] of this.map) {
       if (evs.length === 0) {
         continue
       }
 
-      evs.sort((a, b) => sortableActionRatio(a[0]) - sortableActionRatio(b[0]))
+      evs.sort((a, b) => sortableActionRatio(b[0]) - sortableActionRatio(a[0]))
 
       fmt.line(() => {
-        fmt.h3().book().code(file)
+        fmt.h4().book().code(file)
       })
 
       for (const it of evs) {
@@ -217,6 +222,10 @@ export class EvidenceBook {
         }
       }
     }
+
+    fmt.line(() => {
+      fmt.push('This report is generated against').code(commit)
+    })
 
     return fmt.display.trim()
   }
@@ -278,7 +287,7 @@ export class Fmt {
   }
 
   trimEnd() {
-    this.display.trimEnd()
+    this.display = this.display.trimEnd()
     return this
   }
 
