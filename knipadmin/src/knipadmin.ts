@@ -141,37 +141,49 @@ export class EvidenceBook {
         continue
       }
 
+      evs.sort((a, b) => sortableActionRatio(a[0]) - sortableActionRatio(b[0]))
+
       const added = evs.filter(it => it[0] === 'added')
       const deleted = evs.filter(it => it[0] === 'deleted')
 
-      fmt.h3()._().book()._().code(file).eol()
+      fmt.line(() => {
+        fmt.h3().book().code(file)
+      })
 
-      fmt.quote()._().code(`+${added.length} issues`).eol()
-      fmt.quote()._().code(`-${deleted.length} issues`).eol()
-
-      evs.sort((a, b) => sortableActionRatio(a[0]) - sortableActionRatio(b[0]))
+      if (added.length > 0) {
+        fmt.line(() => {
+          fmt.quote().code(`+${added.length} issues`)
+        })
+      }
+      if (deleted.length > 0) {
+        fmt.line(() => {
+          fmt.quote().code(`-${deleted.length} issues`)
+        })
+      }
 
       for (const it of evs) {
         const [action, issueType, issue] = it
         const issueText = issueDesc.get(issueType)!
 
-        fmt.bullet()._()
+        fmt.bullet()
 
         if (action === 'added') {
-          fmt.fire()._()
-
-          fmt.push(issueText.title.toLowerCase())._()
-
-          fmt.code(issue.name)._().push('at line:')._().code(issue.line.toString()).eol()
+          fmt.line(() => {
+            fmt
+              .fire()
+              .push(issueText.title.toLowerCase())
+              .code(issue.name).push('at line:')
+              .code(issue.line.toString())
+          })
         } else if (action === 'deleted') {
-          fmt.rocket()._()
-
-          fmt.push('thank you for fixing')._()
-
-          fmt.push(issueText.title.toLowerCase())._()
-
-          fmt.brackets(() => {
-            fmt.code(issue.name).eol()
+          fmt.line(() => {
+            fmt
+              .rocket()
+              .push('thank you for fixing')
+              .push(issueText.title.toLowerCase())
+              .brackets(() => {
+                fmt.code(issue.name)
+              })
           })
         }
       }
@@ -184,28 +196,39 @@ export class EvidenceBook {
 export class Fmt {
   display = ''
 
+  line(fn: () => void) {
+    fn()
+    this.eol()
+    return this
+  }
+
   h3() {
     this.display += '###'
+    this._()
     return this
   }
 
   h4() {
     this.display += '####'
+    this._()
     return this
   }
 
   bullet() {
     this.display += '-'
+    this._()
     return this
   }
 
   quote() {
     this.display += '>'
+    this._()
     return this
   }
 
   push(str: string) {
     this.display += str.trim()
+    this._()
     return this
   }
 
@@ -213,26 +236,31 @@ export class Fmt {
     this.display += '('
     fn()
     this.display += ')'
+    this._()
     return this
   }
 
   code(str: string) {
     this.display += '`' + str.trim() + '`'
+    this._()
     return this
   }
 
   rocket() {
     this.display += '🚀'
+    this._()
     return this
   }
 
   book() {
     this.display += '📖'
+    this._()
     return this
   }
 
   fire() {
     this.display += '🔥'
+    this._()
     return this
   }
 
