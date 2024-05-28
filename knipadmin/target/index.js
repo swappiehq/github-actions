@@ -29196,6 +29196,19 @@ function wrappy (fn, cb) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Fmt = exports.EvidenceBook = exports.knipadmin = void 0;
 const promises_1 = __nccwpck_require__(3977);
+const issueDesc = new Map([
+    ['files', { title: 'Unused files', desc: 'Unable to find a reference to this file' }],
+    ['dependencies', { title: 'Unused dependencies', desc: 'Unable to find a reference to this dependency' }],
+    ['unlisted', { title: 'Unlisted dependencies', desc: 'Used dependencies not listed in package.json' }],
+    ['unresolved', { title: 'Unresolved imports', desc: 'Unable to resolve this (import) specifier' }],
+    ['exports', { title: 'Unused exports', desc: 'Unable to find a reference to this export' }],
+    ['types', { title: 'Unused exported types', desc: 'Unable to find a reference to this exported type' }],
+    ['nsExports', { title: 'Exports in used namespace', desc: 'Namespace with export is referenced, but not export itself' }],
+    ['nsTypes', { title: 'Exported types in used namespace', desc: 'Namespace with type is referenced, but not type itself' }],
+    ['enumMembers', { title: 'Unused exported enum members', desc: 'Unable to find a reference to this enum member' }],
+    ['classMembers', { title: 'Unused exported class members', desc: 'Unable to find a reference to this class member' }],
+    ['duplicates', { title: 'Duplicate exports', desc: 'This is exported more than once' }],
+]);
 async function knipadmin(opts) {
     const report = await parseReport(opts.nextReportPath);
     const baseReport = await parseReport(opts.baseReportPath);
@@ -29268,11 +29281,23 @@ class EvidenceBook {
             if (evs.length === 0) {
                 continue;
             }
-            const addedCount = evs.filter(it => it[0] === 'added');
-            const deletedCount = evs.filter(it => it[0] === 'deleted');
+            const added = evs.filter(it => it[0] === 'added');
+            const deleted = evs.filter(it => it[0] === 'deleted');
             fmt.h3()._().book()._().code(file).eol();
-            fmt.quote()._().push(`+ ${addedCount.length} issues`).eol();
-            fmt.quote()._().push(`- ${deletedCount.length} issues`).eol();
+            fmt.quote()._().code(`+${added.length} issues`).eol();
+            fmt.quote()._().code(`-${deleted.length} issues`).eol();
+            evs.sort((a, b) => sortableActionRatio(a[0]) - sortableActionRatio(b[0]));
+            for (const it of evs) {
+                const [action, issueType, issue] = it;
+                fmt.bullet()._();
+                if (action === 'added') {
+                    fmt.fire();
+                }
+                else if (action === 'deleted') {
+                    fmt.rocket();
+                }
+                fmt._().code(issue.name)._().push('at line: ').code(issue.line.toString()).eol();
+            }
         }
         return fmt.display.trim();
     }
@@ -29282,6 +29307,14 @@ class Fmt {
     display = '';
     h3() {
         this.display += '###';
+        return this;
+    }
+    h4() {
+        this.display += '####';
+        return this;
+    }
+    bullet() {
+        this.display += '-';
         return this;
     }
     quote() {
@@ -29324,6 +29357,15 @@ class Fmt {
     }
 }
 exports.Fmt = Fmt;
+function sortableActionRatio(action) {
+    if (action === 'added') {
+        return 3;
+    }
+    if (action === 'deleted') {
+        return 2;
+    }
+    return 1;
+}
 
 
 /***/ }),
