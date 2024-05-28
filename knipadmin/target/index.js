@@ -29289,14 +29289,21 @@ class EvidenceBook {
             evs.sort((a, b) => sortableActionRatio(a[0]) - sortableActionRatio(b[0]));
             for (const it of evs) {
                 const [action, issueType, issue] = it;
+                const issueText = issueDesc.get(issueType);
                 fmt.bullet()._();
                 if (action === 'added') {
-                    fmt.fire();
+                    fmt.fire()._();
+                    fmt.push(issueText.title.toLowerCase())._();
+                    fmt.code(issue.name)._().push('at line:')._().code(issue.line.toString()).eol();
                 }
                 else if (action === 'deleted') {
-                    fmt.rocket();
+                    fmt.rocket()._();
+                    fmt.push('thank you for fixing')._();
+                    fmt.push(issueText.title.toLowerCase())._();
+                    fmt.brackets(() => {
+                        fmt.code(issue.name).eol();
+                    });
                 }
-                fmt._().code(issue.name)._().push('at line: ').code(issue.line.toString()).eol();
             }
         }
         return fmt.display.trim();

@@ -153,16 +153,27 @@ export class EvidenceBook {
 
       for (const it of evs) {
         const [action, issueType, issue] = it
+        const issueText = issueDesc.get(issueType)!
 
         fmt.bullet()._()
 
         if (action === 'added') {
-          fmt.fire()
-        } else if (action === 'deleted') {
-          fmt.rocket()
-        }
+          fmt.fire()._()
 
-        fmt._().code(issue.name)._().push('at line: ').code(issue.line.toString()).eol()
+          fmt.push(issueText.title.toLowerCase())._()
+
+          fmt.code(issue.name)._().push('at line:')._().code(issue.line.toString()).eol()
+        } else if (action === 'deleted') {
+          fmt.rocket()._()
+
+          fmt.push('thank you for fixing')._()
+
+          fmt.push(issueText.title.toLowerCase())._()
+
+          fmt.brackets(() => {
+            fmt.code(issue.name).eol()
+          })
+        }
       }
     }
 
