@@ -29344,10 +29344,12 @@ async function main() {
         nextReportPath,
         baseReportPath,
     });
-    for (const [file, evs] of book.map) {
-        core.info(file);
-        core.info(evs.map(it => it.join('|')).join('\n'));
-    }
+    await kit.rest.issues.createComment({
+        owner,
+        repo,
+        issue_number: prNumber,
+        body: book.dump()
+    });
     const comments = await kit.rest.issues.listComments({
         owner,
         repo,
