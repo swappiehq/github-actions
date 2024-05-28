@@ -221,6 +221,12 @@ export class EvidenceBook {
 
     fmt.eol(2)
 
+    if (deleted > 0) {
+      fmt.line(() => {
+        fmt.push(`❤️‍🩹 Thank you for fixing ${deleted} issues, very much appreciated!`)
+      })
+    }
+
     fmt.line(() => {
       fmt.italic('This report is generated against').link(`\`${displayCommit}\``, commitUrl)
     })
