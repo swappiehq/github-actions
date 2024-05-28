@@ -29194,7 +29194,7 @@ function wrappy (fn, cb) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.EvidenceBook = exports.knipadmin = void 0;
+exports.Fmt = exports.EvidenceBook = exports.knipadmin = void 0;
 const promises_1 = __nccwpck_require__(3977);
 async function knipadmin(opts) {
     const report = await parseReport(opts.nextReportPath);
@@ -29259,11 +29259,14 @@ class EvidenceBook {
     dump() {
         return JSON.stringify(this.json(), null, 2);
     }
+    isEmpty() {
+        return this.map.size === 0;
+    }
     display() {
         const fmt = new Fmt();
         for (const [file, evs] of this.map) {
-            fmt.fire();
-            fmt.blank();
+            fmt.book();
+            fmt._();
             fmt.push(file);
             fmt.eol();
         }
@@ -29272,23 +29275,27 @@ class EvidenceBook {
 }
 exports.EvidenceBook = EvidenceBook;
 class Fmt {
-    static C_FIRE = '🔥';
-    static C_BLANK = ' ';
-    static C_FEED = '\n';
     display = '';
     push(str) {
         this.display += str.trim();
     }
-    fire() {
-        this.display += Fmt.C_FIRE;
+    rocket() {
+        this.display += '🚀';
     }
-    blank() {
-        this.display += Fmt.C_BLANK;
+    book() {
+        this.display += '📖';
+    }
+    fire() {
+        this.display += '🔥';
+    }
+    _() {
+        this.display += ' ';
     }
     eol() {
-        this.display += Fmt.C_FEED;
+        this.display += '\n';
     }
 }
+exports.Fmt = Fmt;
 
 
 /***/ }),
@@ -29326,7 +29333,6 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const knipadmin_1 = __nccwpck_require__(7998);
 console.time('Done');
-const C_KNIP_REGEXP = /#knip/;
 async function main() {
     const token = core.getInput('token', { required: true });
     const ref = core.getInput('ref', { required: true });
@@ -29334,45 +29340,52 @@ async function main() {
     const nextReportPath = core.getInput('next-report', { required: true });
     const { owner, repo } = github.context.repo;
     const kit = github.getOctokit(token);
-    const prNumber = ref.split('/')
-        .map(it => parseInt(it, 10))
-        .find(it => !isNaN(it));
+    const prNumber = computePrNumber(ref);
     if (!prNumber) {
-        throw new Error(`Could not parse .ref, got ${ref}`);
+        core.setFailed('Could not parse .ref into a pr number');
+        return;
     }
     const book = await (0, knipadmin_1.knipadmin)({
         nextReportPath,
         baseReportPath,
     });
-    await kit.rest.issues.createComment({
-        owner,
+    const knipComments = await findKnipComments({
         repo,
-        issue_number: prNumber,
-        body: book.dump()
-    });
-    const comments = await kit.rest.issues.listComments({
         owner,
-        repo,
-        issue_number: prNumber,
+        prNumber,
+        kit
     });
-    const knips = comments.data
-        .filter(it => it.performed_via_github_app?.slug === 'github-actions')
-        .filter(it => C_KNIP_REGEXP.test(it.body ?? ''));
-    if (knips.length === 0) {
+    if (book.isEmpty()) {
+        // delete all related #knip comments if book is empty
+        // because otherwise there is nothing to report on:
+        // no issues were added or fixed
+        core.debug('book is empty');
+        for (const it of knipComments) {
+            core.debug(`deleting ${it.id} comment`);
+            await kit.rest.issues.deleteComment({
+                owner,
+                repo,
+                comment_id: it.id,
+            });
+        }
+        return;
+    }
+    const body = createBody(book.display());
+    if (knipComments.length === 0) {
         await kit.rest.issues.createComment({
             owner,
             repo,
             issue_number: prNumber,
-            body: createBody(book.display()),
+            body,
         });
     }
-    else if (knips.length === 1) {
-        const comment = knips[0];
+    else if (knipComments.length === 1) {
+        const [comment] = knipComments;
         await kit.rest.issues.updateComment({
             owner,
             repo,
             comment_id: comment.id,
-            body: createBody(book.display())
+            body,
         });
     }
     else {
@@ -29386,6 +29399,23 @@ main()
 });
 function createBody(body) {
     return body.trim() + '\n\n#knip';
+}
+function computePrNumber(ref) {
+    return ref.split('/')
+        .map(it => parseInt(it, 10))
+        .find(it => !isNaN(it));
+}
+async function findKnipComments({ kit, owner, repo, prNumber }) {
+    const comments = await kit.rest.issues.listComments({
+        owner,
+        repo,
+        issue_number: prNumber,
+    });
+    const C_KNIP_REGEXP = /#knip/;
+    const knips = comments.data
+        .filter(it => it.performed_via_github_app?.slug === 'github-actions')
+        .filter(it => C_KNIP_REGEXP.test(it.body ?? ''));
+    return knips;
 }
 
 

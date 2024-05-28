@@ -115,12 +115,16 @@ export class EvidenceBook {
     return JSON.stringify(this.json(), null, 2)
   }
 
+  isEmpty() {
+    return this.map.size === 0
+  }
+
   display(): string {
     const fmt = new Fmt()
 
     for (const [file, evs] of this.map) {
-      fmt.fire()
-      fmt.blank()
+      fmt.book()
+      fmt._()
       fmt.push(file)
       fmt.eol()
     }
@@ -129,26 +133,30 @@ export class EvidenceBook {
   }
 }
 
-class Fmt {
-  static C_FIRE = '🔥'
-  static C_BLANK = ' '
-  static C_FEED = '\n'
-
+export class Fmt {
   display = ''
 
   push(str: string) {
     this.display += str.trim()
   }
 
-  fire() {
-    this.display += Fmt.C_FIRE
+  rocket() {
+    this.display += '🚀'
   }
 
-  blank() {
-    this.display += Fmt.C_BLANK
+  book() {
+    this.display += '📖'
+  }
+
+  fire() {
+    this.display += '🔥'
+  }
+
+  _() {
+    this.display += ' '
   }
 
   eol() {
-    this.display += Fmt.C_FEED
+    this.display += '\n'
   }
 }
