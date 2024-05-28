@@ -219,10 +219,10 @@ export class EvidenceBook {
       }
     }
 
-    fmt.eol()
+    fmt.eol(2)
 
     fmt.line(() => {
-      fmt.push('This report is generated against').link(displayCommit, commitUrl)
+      fmt.italic('This report is generated against').link(`\`${displayCommit}\``, commitUrl)
     })
 
     return fmt.display.trim()
