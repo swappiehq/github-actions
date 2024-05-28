@@ -29,7 +29,10 @@ async function main() {
     baseReportPath,
   })
 
-  core.info(book.dump())
+  for (const [file, evs] of book.map) {
+    core.info(file)
+    core.info(evs.map(it => it.join('|')).join('\n'))
+  }
 
   const comments = await kit.rest.issues.listComments({
     owner,
