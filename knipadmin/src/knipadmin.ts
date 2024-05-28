@@ -163,11 +163,7 @@ export class EvidenceBook {
     fmt.push('You are not required to fix those issues, as they are strictly speaking represent code quality and code smell rather than critical issues with the code itself.')
     fmt.push('However, it would be really nice of you would not leave any new issues behind. If you see').fire().push('anywhere below it means you most likely did.')
 
-    fmt.eol(2)
-
-    fmt
-      .italic('Note, it is possible that some of the issues below are not directly caused by the changes made with this PR in which case ignore this block or try to update the branch')
-      .eol(2)
+    fmt.eol(1)
 
     if (added > 0) {
       fmt.line(() => {
@@ -209,7 +205,7 @@ export class EvidenceBook {
           fmt.line(() => {
             fmt
               .rocket()
-              .push('thank you for fixing')
+              .push('deleted')
               .push(issueText.title.toLowerCase())
               .brackets(() => {
                 fmt.code(issue.name)
@@ -224,7 +220,7 @@ export class EvidenceBook {
     if (deleted > 0) {
       fmt.line(() => {
         fmt.push(`❤️‍🩹 Thank you for fixing ${deleted} issues, very much appreciated!`)
-      })
+      }).eol()
     }
 
     fmt.line(() => {
