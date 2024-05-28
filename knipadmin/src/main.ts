@@ -29,7 +29,7 @@ async function main() {
     baseReportPath,
   })
 
-  core.debug(book.dump())
+  core.info(book.dump())
 
   const comments = await kit.rest.issues.listComments({
     owner,
