@@ -123,17 +123,17 @@ export class EvidenceBook {
     const fmt = new Fmt()
 
     for (const [file, evs] of this.map) {
+      if (evs.length === 0) {
+        continue
+      }
+
       const addedCount = evs.filter(it => it[0] === 'added')
       const deletedCount = evs.filter(it => it[0] === 'deleted')
 
-      fmt.book()
-      fmt._()
-      fmt.code(file)
-      fmt._()
-      fmt.brackets(() => {
-        fmt.push(`${addedCount} new issues, ${deletedCount} fixed`)
-      })
-      fmt.eol()
+      fmt.h3()._().book()._().code(file).eol()
+
+      fmt.quote()._().push(`+ ${addedCount.length} issues`).eol()
+      fmt.quote()._().push(`- ${deletedCount.length} issues`).eol()
     }
 
     return fmt.display.trim()
@@ -143,37 +143,55 @@ export class EvidenceBook {
 export class Fmt {
   display = ''
 
+  h3() {
+    this.display += '###'
+    return this
+  }
+
+  quote() {
+    this.display += '>'
+    return this
+  }
+
   push(str: string) {
     this.display += str.trim()
+    return this
   }
 
   brackets(fn: () => void) {
     this.display += '('
     fn()
     this.display += ')'
+    return this
   }
 
   code(str: string) {
     this.display += '`' + str.trim() + '`'
+    return this
   }
 
   rocket() {
     this.display += '🚀'
+    return this
   }
 
   book() {
     this.display += '📖'
+    return this
   }
 
   fire() {
     this.display += '🔥'
+    return this
   }
 
   _() {
     this.display += ' '
+    return this
   }
 
   eol() {
     this.display += '\n'
+    return this
   }
 }
