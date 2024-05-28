@@ -29344,6 +29344,7 @@ async function main() {
         nextReportPath,
         baseReportPath,
     });
+    core.debug(book.dump());
     const comments = await kit.rest.issues.listComments({
         owner,
         repo,
