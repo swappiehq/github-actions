@@ -29437,10 +29437,9 @@ function render({ issues, commit }) {
     });
     for (const [key, issues] of groups) {
         fmt.line(() => {
-            fmt.h4().push('Key').code(key);
+            fmt.h4().push('key').code(key);
         });
         fmt.quote()
-            .push('affected files')
             .push(issues.map(it => '`' + it.file.trim() + '`').join(', '))
             .eol();
     }
