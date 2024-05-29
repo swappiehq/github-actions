@@ -111,7 +111,7 @@ function render({ issues, commit }: RenderProps): string {
     }
   }
 
-  fmt.eol()
+  fmt.eol(2)
 
   fmt.block(() => {
     fmt.italic('This report is generated against').link(`\`${commit.text}\``, commit.url)
