@@ -29396,7 +29396,7 @@ async function main() {
         kit,
         body,
         pickComment(it) {
-            return it.performed_via_github_app?.name === 'github-actions'
+            return it.performed_via_github_app?.slug === 'github-actions'
                 && /#phrase/.test(it.body ?? '');
         },
     });
