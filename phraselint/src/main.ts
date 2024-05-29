@@ -96,8 +96,13 @@ function render({ issues, commit }: RenderProps): string {
   }
 
   fmt.block(() => {
-    fmt.fire().push('Found unequal shape across the files for the given keys.')
-    fmt.push('This is problematic because our systems will get different JSON value depending on the locale.')
+    fmt.fire().push('Hi there, we got issues with i18n files!')
+  })
+
+  fmt.block(() => {
+    fmt.push('Following are the keys which have inconsistent shapes acorss locales.')
+    fmt.push('This is problematic because our systems will get different JSON value for the keys depending on the locale used.')
+    fmt.push('It could lead to some very weird and unepxected bugs while rendering.')
   })
 
   for (const [key, issues] of groups) {
