@@ -29432,7 +29432,7 @@ function render({ issues, commit }) {
         groups.set(issue.key, group);
     }
     fmt.block(() => {
-        fmt.push('Found unequal shape across the files for the given keys.');
+        fmt.fire().push('Found unequal shape across the files for the given keys.');
         fmt.push('This is problematic because our systems will get different JSON value depending on the locale.');
     });
     for (const [key, issues] of groups) {
@@ -29440,7 +29440,7 @@ function render({ issues, commit }) {
             fmt.h3().push('Key').code(key);
         });
         fmt.quote();
-        fmt.push(issues.map(it => it.file).join(', '));
+        fmt.push(issues.map(it => '`' + it.file.trim() + '`').join(', '));
         fmt.eol();
     }
     fmt.eol(2);
