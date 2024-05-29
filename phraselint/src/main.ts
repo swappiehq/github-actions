@@ -88,25 +88,26 @@ function render({ issues, commit }: RenderProps): string {
     return fmt.display.trim()
   }
 
-  fmt.block(() => {
-    fmt.fire().push(`Found ${issues.length} issues with translations`)
-  })
-
-  const groups = new Map<Filename, Issue[]>()
-  for (const it of issues) {
-    const issues = groups.get(it.file) ?? []
-    issues.push(it)
-    groups.set(it.file, issues)
+  const groups = new Map<string, Issue[]>()
+  for (const issue of issues) {
+    const group = groups.get(issue.key) ?? []
+    group.push(issue)
+    groups.set(issue.key, group)
   }
 
-  for (const [file, issues] of groups.entries()) {
+  for (const [key, issues] of groups) {
     fmt.line(() => {
-      fmt.h4().code(file)
+      fmt.h4().push('Key').code(key)
+    })
+
+    fmt.block(() => {
+      fmt.push('Found unequal shape across the files for the given key.')
+      fmt.push('This could potentially be problematic because consumer will get different JSON value depending on the locale.')
     })
 
     for (const issue of issues) {
       fmt.line(() => {
-        fmt.bullet().fire().push(issue.issueKind).push('at').code(issue.key)
+        fmt.bullet().push('at').code(issue.file)
       })
     }
   }
