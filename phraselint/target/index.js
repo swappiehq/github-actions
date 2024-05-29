@@ -29444,6 +29444,7 @@ function render({ issues, commit }) {
             });
         }
     }
+    fmt.eol();
     fmt.block(() => {
         fmt.italic('This report is generated against').link(`\`${commit.text}\``, commit.url);
     });
@@ -29519,7 +29520,10 @@ function inspect(key, values) {
 exports.inspect = inspect;
 function inspectMissingProp(key, values) {
     const propsCount = new Map(values
-        .filter(([, value]) => value !== null && typeof value === 'object' && Object.keys(value).length > 0)
+        .filter(([, value]) => value !== null &&
+        typeof value === 'object' &&
+        Object.keys(value).length > 0 &&
+        !Array.isArray(value))
         .map(([file, value]) => {
         return [file, Object.keys(value).length];
     }));

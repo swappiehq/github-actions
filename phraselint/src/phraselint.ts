@@ -68,7 +68,12 @@ export function inspect(key: string, values: ValuePair[]): Issue[] {
 function inspectMissingProp(key: string, values: ValuePair[]): Issue[] {
   const propsCount = new Map<Filename, number>(
     values
-      .filter(([, value]) => value !== null && typeof value === 'object' && Object.keys(value).length > 0)
+      .filter(([, value]) =>
+        value !== null &&
+        typeof value === 'object' &&
+        Object.keys(value).length > 0 &&
+        !Array.isArray(value)
+      )
       .map(([file, value]) => {
         return [file, Object.keys(value as object).length]
       })
