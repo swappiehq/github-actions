@@ -29437,11 +29437,12 @@ function render({ issues, commit }) {
     });
     for (const [key, issues] of groups) {
         fmt.line(() => {
-            fmt.h3().push('Key').code(key);
+            fmt.h4().push('Key').code(key);
         });
-        fmt.quote();
-        fmt.push(issues.map(it => '`' + it.file.trim() + '`').join(', '));
-        fmt.eol();
+        fmt.quote()
+            .push('affected files')
+            .push(issues.map(it => '`' + it.file.trim() + '`').join(', '))
+            .eol();
     }
     fmt.eol(2);
     fmt.block(() => {
