@@ -95,21 +95,19 @@ function render({ issues, commit }: RenderProps): string {
     groups.set(issue.key, group)
   }
 
+  fmt.block(() => {
+    fmt.push('Found unequal shape across the files for the given keys.')
+    fmt.push('This is problematic because our systems will get different JSON value depending on the locale.')
+  })
+
   for (const [key, issues] of groups) {
     fmt.line(() => {
-      fmt.h4().push('Key').code(key)
+      fmt.h3().push('Key').code(key)
     })
 
-    fmt.block(() => {
-      fmt.push('Found unequal shape across the files for the given key.')
-      fmt.push('This could potentially be problematic because consumer will get different JSON value depending on the locale.')
-    })
-
-    for (const issue of issues) {
-      fmt.line(() => {
-        fmt.bullet().push('at').code(issue.file)
-      })
-    }
+    fmt.quote()
+    fmt.push(issues.map(it => it.file).join(', '))
+    fmt.eol()
   }
 
   fmt.eol(2)
