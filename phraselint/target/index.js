@@ -29518,13 +29518,10 @@ function inspect(key, values) {
 }
 exports.inspect = inspect;
 function inspectMissingProp(key, values) {
-    const propsCount = new Map(values.filter(([, value]) => value !== null).map(([file, value]) => {
-        let count = 0;
-        try {
-            count = Object.keys(value).length;
-        }
-        catch { }
-        return [file, count];
+    const propsCount = new Map(values
+        .filter(([, value]) => value !== null && typeof value === 'object' && Object.keys(value).length > 0)
+        .map(([file, value]) => {
+        return [file, Object.keys(value).length];
     }));
     const byCount = new Map();
     for (const [file, count] of propsCount.entries()) {

@@ -66,13 +66,13 @@ export function inspect(key: string, values: ValuePair[]): Issue[] {
 }
 
 function inspectMissingProp(key: string, values: ValuePair[]): Issue[] {
-  const propsCount = new Map<Filename, number>(values.filter(([, value]) => value !== null).map(([file, value]) => {
-    let count = 0
-    try {
-      count = Object.keys(value as object).length
-    } catch { }
-    return [file, count]
-  }))
+  const propsCount = new Map<Filename, number>(
+    values
+      .filter(([, value]) => value !== null && typeof value === 'object' && Object.keys(value).length > 0)
+      .map(([file, value]) => {
+        return [file, Object.keys(value as object).length]
+      })
+  )
 
   const byCount = new Map<number, Filename[]>()
 
