@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { Fmt, knipadmin } from './knipadmin'
+import { knipadmin } from './knipadmin'
 
 console.time('Done')
 

@@ -29291,178 +29291,42 @@ exports.Fmt = Fmt;
 
 /***/ }),
 
-/***/ 7998:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+/***/ 6639:
+/***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.EvidenceBook = exports.knipadmin = void 0;
-const promises_1 = __nccwpck_require__(3977);
-const Fmt_1 = __nccwpck_require__(513);
-const issueDesc = new Map([
-    ['files', { title: 'Unused files', desc: 'Unable to find a reference to this file' }],
-    ['dependencies', { title: 'Unused dependencies', desc: 'Unable to find a reference to this dependency' }],
-    ['unlisted', { title: 'Unlisted dependencies', desc: 'Used dependencies not listed in package.json' }],
-    ['unresolved', { title: 'Unresolved imports', desc: 'Unable to resolve this (import) specifier' }],
-    ['exports', { title: 'Unused exports', desc: 'Unable to find a reference to this export' }],
-    ['types', { title: 'Unused exported types', desc: 'Unable to find a reference to this exported type' }],
-    ['nsExports', { title: 'Exports in used namespace', desc: 'Namespace with export is referenced, but not export itself' }],
-    ['nsTypes', { title: 'Exported types in used namespace', desc: 'Namespace with type is referenced, but not type itself' }],
-    ['enumMembers', { title: 'Unused exported enum members', desc: 'Unable to find a reference to this enum member' }],
-    ['classMembers', { title: 'Unused exported class members', desc: 'Unable to find a reference to this class member' }],
-    ['duplicates', { title: 'Duplicate exports', desc: 'This is exported more than once' }],
-]);
-async function knipadmin(opts) {
-    const report = await parseReport(opts.nextReportPath);
-    const baseReport = await parseReport(opts.baseReportPath);
-    const baseReportIssuesByFile = new Map(baseReport.issues.map(it => [it.file, it]));
-    const evidenceBook = new EvidenceBook();
-    for (const issue of report.issues) {
-        const baseIssue = baseReportIssuesByFile.get(issue.file);
-        // completely new file that has issues now
-        if (!baseIssue) {
-            evidenceBook.insert(issue.file, ['added', 'types', issue.types]);
-            evidenceBook.insert(issue.file, ['added', 'unresolved', issue.unresolved]);
-            evidenceBook.insert(issue.file, ['added', 'exports', issue.exports]);
-            continue;
-        }
-        for (const prop of ['types', 'exports', 'unresolved']) {
-            for (const typeIssue of issue[prop]) {
-                const knownIssue = baseIssue[prop].find(it => it.name === typeIssue.name);
-                if (!knownIssue) {
-                    evidenceBook.insert(issue.file, ['added', prop, [typeIssue]]);
-                }
-            }
-            for (const typeIssue of baseIssue[prop]) {
-                const knownIssue = issue[prop].find(it => it.name === typeIssue.name);
-                if (!knownIssue) {
-                    evidenceBook.insert(issue.file, ['deleted', prop, [typeIssue]]);
-                }
-            }
-        }
-    }
-    return evidenceBook;
-}
-exports.knipadmin = knipadmin;
-async function parseReport(fullPath) {
-    return JSON.parse(await (0, promises_1.readFile)(fullPath, 'utf8'));
-}
-class EvidenceBook {
-    /**
-    * file => Evidence
-    */
-    map = new Map();
-    insert(file, [action, kind, issues]) {
-        if (issues.length === 0) {
-            return;
-        }
-        const evs = this.get(file);
-        for (const issue of issues) {
-            evs.push([action, kind, issue]);
-        }
-    }
-    get(file) {
-        let value = this.map.get(file);
-        if (!value) {
-            value = [];
-            this.map.set(file, value);
-        }
-        return value;
-    }
-    json() {
-        return Object.fromEntries(this.map);
-    }
-    dump() {
-        return JSON.stringify(this.json(), null, 2);
-    }
-    isEmpty() {
-        return this.map.size === 0;
-    }
-    display({ commitUrl, displayCommit }) {
-        const added = [...this.map.values()]
-            .flatMap(it => it)
-            .reduce((acc, it) => {
-            return it[0] === 'added' ? acc + 1 : acc;
-        }, 0);
-        const deleted = [...this.map.values()]
-            .flatMap(it => it)
-            .reduce((acc, it) => {
-            return it[0] === 'deleted' ? acc + 1 : acc;
-        }, 0);
-        if (added === 0 && deleted === 0) {
-            return '✂️ `knip`: no issues were fixed nor added!';
-        }
-        const fmt = new Fmt_1.Fmt();
-        fmt.push('Hello there!').eol(2);
-        fmt.push('These are dead code related issues associated with this PR (previously known as `ts-prune`, now `knip` ✂️).');
-        fmt.push('You are not required to fix those issues, as they are strictly speaking represent code quality and code smell rather than critical issues with the code itself.');
-        fmt.push('However, it would be really nice of you would not leave any new issues behind. If you see').fire().push('anywhere below it means you most likely did.');
-        fmt.eol(1);
-        if (added > 0) {
-            fmt.line(() => {
-                fmt.quote().code(`+${added} issues`);
-            });
-        }
-        if (deleted > 0) {
-            fmt.line(() => {
-                fmt.quote().code(`-${deleted} issues`);
-            });
-        }
-        for (const [file, evs] of this.map) {
-            if (evs.length === 0) {
-                continue;
-            }
-            evs.sort((a, b) => sortableActionRatio(b[0]) - sortableActionRatio(a[0]));
-            fmt.line(() => {
-                fmt.h4().book().code(file);
-            });
-            for (const it of evs) {
-                const [action, issueType, issue] = it;
-                const issueText = issueDesc.get(issueType);
-                fmt.bullet();
-                if (action === 'added') {
-                    fmt.line(() => {
-                        fmt
-                            .fire()
-                            .push(issueText.title.toLowerCase())
-                            .code(issue.name).push('at line:')
-                            .code(issue.line.toString());
-                    });
-                }
-                else if (action === 'deleted') {
-                    fmt.line(() => {
-                        fmt
-                            .rocket()
-                            .push('deleted')
-                            .push(issueText.title.toLowerCase())
-                            .brackets(() => {
-                            fmt.code(issue.name);
-                        });
-                    });
-                }
-            }
-        }
-        fmt.eol(2);
-        if (deleted > 0) {
-            fmt.push(`❤️‍🩹 Thank you for fixing ${deleted} issues, very much appreciated!`).eol(2);
-        }
-        fmt.line(() => {
-            fmt.italic('This report is generated against').link(`\`${displayCommit}\``, commitUrl);
+exports.upsertIssueComment = void 0;
+async function upsertIssueComment({ repo, owner, prNumber, kit, body, pickComment, }) {
+    let listCommentsResponse = await kit.rest.issues.listComments({
+        owner,
+        repo,
+        issue_number: prNumber,
+    });
+    const comments = listCommentsResponse.data.filter(it => pickComment(it));
+    if (comments.length === 0) {
+        await kit.rest.issues.createComment({
+            owner,
+            repo,
+            issue_number: prNumber,
+            body,
         });
-        return fmt.display.trim();
+    }
+    else if (comments.length === 1) {
+        const [comment] = comments;
+        await kit.rest.issues.updateComment({
+            owner,
+            repo,
+            comment_id: comment.id,
+            body,
+        });
+    }
+    else {
+        throw new Error('somehow got more than 1 comments?');
     }
 }
-exports.EvidenceBook = EvidenceBook;
-function sortableActionRatio(action) {
-    if (action === 'added') {
-        return 3;
-    }
-    if (action === 'deleted') {
-        return 2;
-    }
-    return 1;
-}
+exports.upsertIssueComment = upsertIssueComment;
 
 
 /***/ }),
@@ -29498,69 +29362,44 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
-const knipadmin_1 = __nccwpck_require__(7998);
+const phraselint_1 = __nccwpck_require__(6330);
+const upsertIssueComment_1 = __nccwpck_require__(6639);
+const Fmt_1 = __nccwpck_require__(513);
 console.time('Done');
 async function main() {
     const token = core.getInput('token', { required: true });
-    const baseReportPath = core.getInput('base-report', { required: true });
-    const nextReportPath = core.getInput('next-report', { required: true });
     const commit = core.getInput('commit', { required: true });
+    const i18nBaseDir = core.getInput('dir', { required: true });
+    const mainEntry = core.getInput('main-entry', { required: true });
     const { repo: { owner, repo }, ref } = github.context;
     const prNumber = computePrNumber(ref);
     if (!prNumber) {
         core.setFailed('Could not parse .ref into a pr number');
         return;
     }
-    const book = await (0, knipadmin_1.knipadmin)({
-        nextReportPath,
-        baseReportPath,
+    const issues = await (0, phraselint_1.phraselint)({
+        dir: i18nBaseDir,
+        mainEntry,
     });
     const kit = github.getOctokit(token);
-    const knipComments = await findKnipComments({
+    const body = createBody(render({
+        issues,
+        commit: {
+            text: commit.slice(0, 7),
+            url: `https://github.com/${owner}/${repo}/pull/${prNumber}/commits/${commit}`
+        }
+    }));
+    await (0, upsertIssueComment_1.upsertIssueComment)({
         repo,
         owner,
         prNumber,
-        kit
+        kit,
+        body,
+        pickComment(it) {
+            return it.performed_via_github_app?.name === 'github-actions'
+                && /#phrase/.test(it.body ?? '');
+        },
     });
-    const body = createBody(book.display({
-        displayCommit: commit.slice(0, 7),
-        commitUrl: `https://github.com/${owner}/${repo}/pull/${prNumber}/commits/${commit}`
-    }));
-    if (knipComments.length === 0) {
-        await kit.rest.issues.createComment({
-            owner,
-            repo,
-            issue_number: prNumber,
-            body,
-        });
-    }
-    else if (knipComments.length === 1) {
-        const [comment] = knipComments;
-        await kit.rest.issues.updateComment({
-            owner,
-            repo,
-            comment_id: comment.id,
-            body,
-        });
-    }
-    else {
-        throw new Error('somehow got more than 1 comments?');
-    }
-    if (!book.isEmpty()) {
-        let added = 0;
-        for (const [file, evs] of book.map.entries()) {
-            for (const ev of evs) {
-                const [action, issueType, issue] = ev;
-                if (action === 'added') {
-                    added += 1;
-                    core.info(`- ${file} has issue "${issueType}" for ${issue.name} (${issue.line}:${issue.col})`);
-                }
-            }
-        }
-        if (added > 0) {
-            core.setFailed(`Failed because this PR added knip issues`);
-        }
-    }
 }
 main()
     .catch(console.error)
@@ -29568,24 +29407,147 @@ main()
     console.timeEnd('Done');
 });
 function createBody(body) {
-    return body.trim() + '\n\n#knip';
+    return body.trim() + '\n\n#phrase';
 }
 function computePrNumber(ref) {
     return ref.split('/')
         .map(it => parseInt(it, 10))
         .find(it => !isNaN(it));
 }
-async function findKnipComments({ kit, owner, repo, prNumber }) {
-    const comments = await kit.rest.issues.listComments({
-        owner,
-        repo,
-        issue_number: prNumber,
+function render({ issues, commit }) {
+    const fmt = new Fmt_1.Fmt();
+    if (issues.length === 0) {
+        fmt.block(() => {
+            fmt.rocket().push(`Translations look good!`);
+        });
+        fmt.block(() => {
+            fmt.italic('This report is generated against').link(`\`${commit.text}\``, commit.url);
+        });
+        return fmt.display.trim();
+    }
+    fmt.block(() => {
+        fmt.fire().push(`Found ${issues.length} issues with translations`);
     });
-    const C_KNIP_REGEXP = /#knip/;
-    const knips = comments.data
-        .filter(it => it.performed_via_github_app?.slug === 'github-actions')
-        .filter(it => C_KNIP_REGEXP.test(it.body ?? ''));
-    return knips;
+    const groups = new Map();
+    for (const it of issues) {
+        const issues = groups.get(it.file) ?? [];
+        issues.push(it);
+        groups.set(it.file, issues);
+    }
+    for (const [file, issues] of groups.entries()) {
+        fmt.line(() => {
+            fmt.h4().code(file);
+        });
+        for (const issue of issues) {
+            fmt.line(() => {
+                fmt.bullet().fire().push(issue.issueKind).push('at').code(issue.key);
+            });
+        }
+    }
+    fmt.block(() => {
+        fmt.italic('This report is generated against').link(`\`${commit.text}\``, commit.url);
+    });
+    return fmt.display.trim();
+}
+
+
+/***/ }),
+
+/***/ 6330:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.inspect = exports.phraselint = exports.IssueKind = void 0;
+const fs = __importStar(__nccwpck_require__(3977));
+const path = __importStar(__nccwpck_require__(9411));
+const cwd = process.cwd();
+var IssueKind;
+(function (IssueKind) {
+    IssueKind["MissingProp"] = "Missing property";
+})(IssueKind || (exports.IssueKind = IssueKind = {}));
+async function phraselint({ dir, mainEntry }) {
+    const baseDir = path.resolve(cwd, dir);
+    const files = (await fs.readdir(baseDir))
+        .filter(it => it.endsWith('.json'));
+    const map = new Map();
+    for (const file of files) {
+        const json = JSON.parse(await fs.readFile(path.join(baseDir, file), 'utf8'));
+        map.set(file, json);
+    }
+    const issues = [];
+    for (const [key, value] of Object.entries(map.get(mainEntry) ?? {})) {
+        const values = files
+            .map(file => {
+            const value = map.get(file)?.[key] ?? null;
+            return [file, value];
+        });
+        issues.push(...inspect(key, values));
+    }
+    return issues;
+}
+exports.phraselint = phraselint;
+function inspect(key, values) {
+    const issues = [];
+    issues.push(...inspectMissingProp(key, values));
+    return issues;
+}
+exports.inspect = inspect;
+function inspectMissingProp(key, values) {
+    const propsCount = new Map(values.filter(([, value]) => value !== null).map(([file, value]) => {
+        let count = 0;
+        try {
+            count = Object.keys(value).length;
+        }
+        catch { }
+        return [file, count];
+    }));
+    const byCount = new Map();
+    for (const [file, count] of propsCount.entries()) {
+        const files = byCount.get(count) ?? [];
+        files.push(file);
+        byCount.set(count, files);
+    }
+    if (byCount.size <= 1) {
+        return [];
+    }
+    // we say first group is the true, all others lacking something
+    const [, ...troubleGroup] = [...byCount].sort((a, b) => b[0] - a[0]);
+    const issues = [];
+    for (const [, files] of troubleGroup) {
+        for (const file of files) {
+            issues.push({
+                issueKind: IssueKind.MissingProp,
+                file,
+                key
+            });
+        }
+    }
+    return issues;
 }
 
 
@@ -29700,6 +29662,14 @@ module.exports = require("node:events");
 
 "use strict";
 module.exports = require("node:fs/promises");
+
+/***/ }),
+
+/***/ 9411:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:path");
 
 /***/ }),
 

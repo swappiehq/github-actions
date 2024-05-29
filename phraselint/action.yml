@@ -1,0 +1,18 @@
+name: 'PhraseLint'
+description: 'Phrase linting'
+inputs:
+  token:
+    description: 'Auth token'
+    required: true
+  commit:
+    description: 'Commit'
+    required: true
+  dir:
+    description: 'i18n directory'
+    required: true
+  main-entry:
+    description: 'Main i18n file'
+    required: true
+runs:
+  using: 'node20'
+  main: 'target/index.js'
