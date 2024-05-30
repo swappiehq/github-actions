@@ -85,7 +85,7 @@ function render({ issues, commit }: RenderProps): string {
     fmt.block(() => {
       fmt.italic('This report is generated against').link(`\`${commit.text}\``, commit.url)
     })
-    return fmt.display.trim()
+    return fmt.render()
   }
 
   const groups = new Map<string, Issue[]>()
@@ -121,5 +121,5 @@ function render({ issues, commit }: RenderProps): string {
     fmt.italic('This report is generated against').link(`\`${commit.text}\``, commit.url)
   })
 
-  return fmt.display.trim()
+  return fmt.render()
 }

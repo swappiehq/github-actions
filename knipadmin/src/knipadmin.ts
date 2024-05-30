@@ -226,7 +226,7 @@ export class EvidenceBook {
       fmt.italic('This report is generated against').link(`\`${displayCommit}\``, commitUrl)
     })
 
-    return fmt.display.trim()
+    return fmt.render()
   }
 }
 

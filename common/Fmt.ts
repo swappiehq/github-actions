@@ -1,9 +1,29 @@
 export class Fmt {
-  display = ''
+  private display = ''
+
+  static link(text: string, url: string) {
+    return `[${text}](${url})`
+  }
+
+  static code(str: string) {
+    return '`' + str + '`'
+  }
+
+  static italic(str: string) {
+    return '_' + str.trim() + '_'
+  }
+
+  static brackets(str: string) {
+    return '(' + str.trim() + ')'
+  }
+
+  render() {
+    return this.display.trim()
+  }
 
   link(text: string, url: string) {
+    this.display += Fmt.link(text, url)
     this._()
-    this.display += `[${text}](${url})`
     return this
   }
 
@@ -50,7 +70,7 @@ export class Fmt {
   }
 
   italic(str: string) {
-    this.display += '_' + str.trim() + '_'
+    this.display += Fmt.italic(str)
     this._()
     return this
   }
@@ -70,7 +90,7 @@ export class Fmt {
   }
 
   code(str: string) {
-    this.display += '`' + str.trim() + '`'
+    this.display += Fmt.code(str)
     this._()
     return this
   }

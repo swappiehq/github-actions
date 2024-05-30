@@ -29197,9 +29197,24 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Fmt = void 0;
 class Fmt {
     display = '';
+    static link(text, url) {
+        return `[${text}](${url})`;
+    }
+    static code(str) {
+        return '`' + str + '`';
+    }
+    static italic(str) {
+        return '_' + str.trim() + '_';
+    }
+    static brackets(str) {
+        return '(' + str.trim() + ')';
+    }
+    render() {
+        return this.display.trim();
+    }
     link(text, url) {
+        this.display += Fmt.link(text, url);
         this._();
-        this.display += `[${text}](${url})`;
         return this;
     }
     line(fn) {
@@ -29238,7 +29253,7 @@ class Fmt {
         return this;
     }
     italic(str) {
-        this.display += '_' + str.trim() + '_';
+        this.display += Fmt.italic(str);
         this._();
         return this;
     }
@@ -29255,7 +29270,7 @@ class Fmt {
         return this;
     }
     code(str) {
-        this.display += '`' + str.trim() + '`';
+        this.display += Fmt.code(str);
         this._();
         return this;
     }
@@ -29423,7 +29438,7 @@ function render({ issues, commit }) {
         fmt.block(() => {
             fmt.italic('This report is generated against').link(`\`${commit.text}\``, commit.url);
         });
-        return fmt.display.trim();
+        return fmt.render();
     }
     const groups = new Map();
     for (const issue of issues) {
@@ -29451,7 +29466,7 @@ function render({ issues, commit }) {
     fmt.block(() => {
         fmt.italic('This report is generated against').link(`\`${commit.text}\``, commit.url);
     });
-    return fmt.display.trim();
+    return fmt.render();
 }
 
 
