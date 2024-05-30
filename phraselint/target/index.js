@@ -29447,19 +29447,19 @@ function render({ issues, commit }) {
         groups.set(issue.key, group);
     }
     fmt.block(() => {
-        fmt.fire().push('Hi there, we got issues with i18n files!');
+        fmt.fire().push('Hi there, we got issues with `i18n` files!');
     });
     fmt.block(() => {
-        fmt.push('Following are the keys which have inconsistent shapes acorss locales.');
+        fmt.push('Below are the keys which have objects as values and which shapes are inconsistent across locales.');
         fmt.push('This is problematic because our systems will get different JSON value for the keys depending on the locale used.');
-        fmt.push('It could lead to some very weird and unepxected bugs while rendering.');
+        fmt.push('It could lead to some weird/unexpected bugs while rendering.');
     });
     for (const [key, issues] of groups) {
         fmt.line(() => {
             fmt.h4().push('key').code(key);
         });
         fmt.quote()
-            .push(issues.map(it => '`' + it.file.trim() + '`').join(', '))
+            .push(issues.map(it => Fmt_1.Fmt.code(it.file)).join(', '))
             .eol();
     }
     fmt.eol(2);

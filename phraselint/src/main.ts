@@ -96,13 +96,13 @@ function render({ issues, commit }: RenderProps): string {
   }
 
   fmt.block(() => {
-    fmt.fire().push('Hi there, we got issues with i18n files!')
+    fmt.fire().push('Hi there, we got issues with `i18n` files!')
   })
 
   fmt.block(() => {
-    fmt.push('Following are the keys which have inconsistent shapes acorss locales.')
+    fmt.push('Below are the keys which have objects as values and which shapes are inconsistent across locales.')
     fmt.push('This is problematic because our systems will get different JSON value for the keys depending on the locale used.')
-    fmt.push('It could lead to some very weird and unepxected bugs while rendering.')
+    fmt.push('It could lead to some weird/unexpected bugs while rendering.')
   })
 
   for (const [key, issues] of groups) {
@@ -111,7 +111,7 @@ function render({ issues, commit }: RenderProps): string {
     })
 
     fmt.quote()
-      .push(issues.map(it => '`' + it.file.trim() + '`').join(', '))
+      .push(issues.map(it => Fmt.code(it.file)).join(', '))
       .eol()
   }
 
