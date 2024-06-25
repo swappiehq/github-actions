@@ -36,6 +36,11 @@ inputs:
     type: string
     required: false
     default: ""
+  extra_pr_body:
+    description: Extra section to add to the PR description after the release notes
+    type: string
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -143,7 +148,7 @@ runs:
         commit-message: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
         title: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
         branch: 'update/${{ inputs.plugin }}/${{ env.LATEST_VERSION }}'
-        body: 'See release notes in: ${{ env.RELEASE_NOTES }}'
+        body: 'See release notes in: ${{ env.RELEASE_NOTES }}${{ inputs.extra_pr_body != '' && \n${{ inputs.extra_pr_body }} }}'
         delete-branch: true
         labels: 'dependencies,${{ inputs.github_pullrequest_extra_labels }}'
         author: 'GitHub <noreply@github.com>'
