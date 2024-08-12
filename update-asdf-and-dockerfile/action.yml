@@ -133,11 +133,11 @@ runs:
         poetry version ${{ env.LATEST_VERSION }} && \
         poetry lock --no-update
 
-    # This is using the version 4.2.3
+    # This is using the version 6.1.0 https://github.com/peter-evans/create-pull-request/issues/2790
     # Reference the repository with SHA for security
     # Source: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
     # Here we use a wild card for the package.json files to avoid "pathspec 'xxx' did not match any files" errors as package.json files may not exist or be in subdirectories
-    - uses: peter-evans/create-pull-request@2b011faafdcbc9ceb11414d64d0573f37c774b04
+    - uses: peter-evans/create-pull-request@370712159463f5e3e780068cb9bed6d28c27b94e
       with:
         add-paths: .tool-versions, ${{inputs.docker_file_name}}${{inputs.add_extra_files_to_pr != '' && format(', {0}', inputs.add_extra_files_to_pr) || '' }}
         commit-message: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
