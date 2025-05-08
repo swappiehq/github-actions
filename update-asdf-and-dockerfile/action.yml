@@ -44,7 +44,7 @@ runs:
     # Refer to external action with git commit SHA for security.
     # Source: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
     - name: ASDF Setup plugins
-      uses: asdf-vm/actions/plugins-add@6844d09b13209e7d2ce3b63d2b089a2acef581ec
+      uses: asdf-vm/actions/plugins-add@9cd779f40fe38688dd19505ccbc4eaaf018b44e7
     - name: Get current version from asdf
       shell: bash
       run: echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
