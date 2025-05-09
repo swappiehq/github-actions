@@ -58,7 +58,7 @@ runs:
         else
           LOOK_UP_VERSION='' # Do not define lookup version for the latest & major version
         fi
-        
+
         LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}" ${LOOK_UP_VERSION})
 
         if [ "${{ inputs.plugin }}" == 'python' ]; then
@@ -123,7 +123,7 @@ runs:
         sed -i "s/^python =.*/python = \"${{ env.LATEST_VERSION }}\"/" pyproject.toml && \
         asdf install python && \
         asdf install poetry && \
-        [ "$(grep poetry .tool-versions | cut -d' ' -f2 | cut -d '.' -f1)" -eq "1" ] && poetry lock --no-update || poetry lock
+        [ "$(echo ${LATEST_VERSION} | cut -d '.' -f1)" -eq "1" ] && poetry lock --no-update || poetry lock
     - name: Update latest poetry version to pyproject.toml if it exists
       if: ${{ inputs.plugin == 'poetry' && env.CURRENT_VERSION != env.LATEST_VERSION }}
       shell: bash
@@ -131,7 +131,7 @@ runs:
         test -f pyproject.toml && \
         asdf install poetry  && \
         poetry version ${{ env.LATEST_VERSION }} && \
-        [ "$(grep poetry .tool-versions | cut -d' ' -f2 | cut -d '.' -f1)" -eq "1" ] && poetry lock --no-update || poetry lock
+        [ "$(echo ${LATEST_VERSION} | cut -d '.' -f1)" -eq "1" ] && poetry lock --no-update || poetry lock
     # This is using the version 6.1.0 https://github.com/peter-evans/create-pull-request/issues/2790
     # Reference the repository with SHA for security
     # Source: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
