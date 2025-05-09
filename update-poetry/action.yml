@@ -15,7 +15,7 @@ runs:
     # TODO: It would be better to reference this locally but if I do it refers a local file
     # Not in the context of this repo but the repository that is using this action
     # Because of this we need to use the full path to this :(
-    - uses: swappiehq/github-actions/update-asdf-and-dockerfile@main
+    - uses: swappiehq/github-actions/update-asdf-and-dockerfile@asdf-fix
       with:
         plugin: poetry
         version: '${{ inputs.version }}'
