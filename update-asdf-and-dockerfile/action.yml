@@ -49,24 +49,24 @@ runs:
       shell: bash
       run: echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
     - name: Get latest version from asdf
-      if: ${{ inputs.version == 'major' }}
       shell: bash
       run: |
-        LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}")
-        echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
-    - name: Get latest minor version from asdf
-      if: ${{ inputs.version == 'minor' }}
-      shell: bash
-      run: |
-        CURRENT_MINOR_VERSION=$(echo ${{ env.CURRENT_VERSION }} | cut -d '.' -f 1)
-        LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}" $CURRENT_MINOR_VERSION)
-        echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
-    - name: Get latest patch version from asdf
-      if: ${{ inputs.version == 'patch' }}
-      shell: bash
-      run: |
-        CURRENT_PATCH_VERSION=$(echo ${{ env.CURRENT_VERSION }} | cut -d '.' -f 1,2)
-        LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}" $CURRENT_PATCH_VERSION)
+        if [ "${{ inputs.version }}" == 'minor' ]; then
+          LOOK_UP_VERSION=$(echo ${{ env.CURRENT_VERSION }} | cut -d '.' -f 1)
+        elif [ "${{ inputs.version }}" == 'patch' ]; then
+          LOOK_UP_VERSION=$(echo ${{ env.CURRENT_VERSION }} | cut -d '.' -f 1,2)
+        else
+          LOOK_UP_VERSION='' # Do not define lookup version for the latest & major version
+        fi
+        
+        LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}" ${LOOK_UP_VERSION})
+
+        if [ "${{ inputs.plugin }}" == 'python' ]; then
+          # Remove trailing 't' from version number for python which asdf latest is returning.
+          # t refers to a experimental free-threaded mode and the version causes issues on installation
+          LATEST_VERSION=$(echo $LATEST_VERSION | sed 's/t$//')
+        fi
+
         echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
     # NodeJS has LTS versions
     - name: Get newest NodeJS LTS version
