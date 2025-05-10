@@ -49,6 +49,7 @@ runs:
       shell: bash
       run: echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
     - name: Get latest version from asdf
+      if: ${{ contains(fromJSON('["major", "minor", "patch"]'), inputs.version) }}
       shell: bash
       run: |
         if [ "${{ inputs.version }}" == 'minor' ]; then
@@ -56,7 +57,7 @@ runs:
         elif [ "${{ inputs.version }}" == 'patch' ]; then
           LOOK_UP_VERSION=$(echo ${{ env.CURRENT_VERSION }} | cut -d '.' -f 1,2)
         else
-          LOOK_UP_VERSION='' # Do not define lookup version for the latest & major version
+          LOOK_UP_VERSION='' # Do not define lookup version for major version upgrade
         fi
 
         LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}" ${LOOK_UP_VERSION})
