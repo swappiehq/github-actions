@@ -20,7 +20,7 @@ inputs:
     options:
       - latest
       - lts
-      - major # Semver minor updates from MAJOR.MINOR.PATCH
+      - major # Semver major updates from MAJOR.MINOR.PATCH
       - minor # Semver minor updates from MAJOR.MINOR.PATCH
       - patch # Semver patch updates from MAJOR.MINOR.PATCH
   release_notes:
