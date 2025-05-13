@@ -20,6 +20,7 @@ inputs:
     options:
       - latest
       - lts
+      - major # Semver major updates from MAJOR.MINOR.PATCH
       - minor # Semver minor updates from MAJOR.MINOR.PATCH
       - patch # Semver patch updates from MAJOR.MINOR.PATCH
   release_notes:
@@ -44,29 +45,30 @@ runs:
     # Refer to external action with git commit SHA for security.
     # Source: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
     - name: ASDF Setup plugins
-      uses: asdf-vm/actions/plugins-add@6844d09b13209e7d2ce3b63d2b089a2acef581ec
+      uses: asdf-vm/actions/plugins-add@9cd779f40fe38688dd19505ccbc4eaaf018b44e7
     - name: Get current version from asdf
       shell: bash
       run: echo "CURRENT_VERSION=$(grep "^${{ inputs.plugin }}" .tool-versions | cut -d' ' -f2)" >> $GITHUB_ENV
     - name: Get latest version from asdf
-      if: ${{ inputs.version == 'major' }}
+      if: ${{ contains(fromJSON('["major", "minor", "patch"]'), inputs.version) }}
       shell: bash
       run: |
-        LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}")
-        echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
-    - name: Get latest minor version from asdf
-      if: ${{ inputs.version == 'minor' }}
-      shell: bash
-      run: |
-        CURRENT_MINOR_VERSION=$(echo ${{ env.CURRENT_VERSION }} | cut -d '.' -f 1)
-        LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}" $CURRENT_MINOR_VERSION)
-        echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
-    - name: Get latest patch version from asdf
-      if: ${{ inputs.version == 'patch' }}
-      shell: bash
-      run: |
-        CURRENT_PATCH_VERSION=$(echo ${{ env.CURRENT_VERSION }} | cut -d '.' -f 1,2)
-        LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}" $CURRENT_PATCH_VERSION)
+        if [ "${{ inputs.version }}" == 'minor' ]; then
+          LOOK_UP_VERSION=$(echo ${{ env.CURRENT_VERSION }} | cut -d '.' -f 1)
+        elif [ "${{ inputs.version }}" == 'patch' ]; then
+          LOOK_UP_VERSION=$(echo ${{ env.CURRENT_VERSION }} | cut -d '.' -f 1,2)
+        else
+          LOOK_UP_VERSION='' # Do not define lookup version for major version upgrade
+        fi
+
+        LATEST_VERSION=$(asdf latest "${{ inputs.plugin }}" ${LOOK_UP_VERSION})
+
+        if [ "${{ inputs.plugin }}" == 'python' ]; then
+          # Remove trailing 't' from version number for python which asdf latest is returning.
+          # t refers to a experimental free-threaded mode and the version causes issues on installation
+          LATEST_VERSION=$(echo $LATEST_VERSION | sed 's/t$//')
+        fi
+
         echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
     # NodeJS has LTS versions
     - name: Get newest NodeJS LTS version
@@ -123,7 +125,7 @@ runs:
         sed -i "s/^python =.*/python = \"${{ env.LATEST_VERSION }}\"/" pyproject.toml && \
         asdf install python && \
         asdf install poetry && \
-        poetry lock --no-update
+        [ "$(echo ${LATEST_VERSION} | cut -d '.' -f1)" -eq "1" ] && poetry lock --no-update || poetry lock
     - name: Update latest poetry version to pyproject.toml if it exists
       if: ${{ inputs.plugin == 'poetry' && env.CURRENT_VERSION != env.LATEST_VERSION }}
       shell: bash
@@ -131,8 +133,7 @@ runs:
         test -f pyproject.toml && \
         asdf install poetry  && \
         poetry version ${{ env.LATEST_VERSION }} && \
-        poetry lock --no-update
-
+        [ "$(echo ${LATEST_VERSION} | cut -d '.' -f1)" -eq "1" ] && poetry lock --no-update || poetry lock
     # This is using the version 6.1.0 https://github.com/peter-evans/create-pull-request/issues/2790
     # Reference the repository with SHA for security
     # Source: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
