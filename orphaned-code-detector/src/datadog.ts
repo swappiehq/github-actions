@@ -51,42 +51,6 @@ export class DataDogClient {
     });
   }
 
-  async getAPMTraces(serviceName: string, timeRange: string): Promise<APMTrace[]> {
-    try {
-      const endTime = Date.now();
-      const startTime = endTime - (this.parseTimeRange(timeRange) * 1000);
-
-      const response = await this.client.post('/api/v2/spans/search', {
-        data: {
-          attributes: {
-            filter: {
-              query: `service:${serviceName}`,
-              from: new Date(startTime).toISOString(),
-              to: new Date(endTime).toISOString()
-            },
-            page: {
-              limit: 1000
-            }
-          }
-        }
-      });
-
-      const spans = response.data.data || [];
-      return spans.map((span: any) => ({
-        trace_id: span.attributes?.trace_id || '',
-        span_id: span.id || '',
-        resource: span.attributes?.resource_name || '',
-        service: span.attributes?.service || serviceName,
-        operation_name: span.attributes?.operation_name || '',
-        start_time: Math.floor(new Date(span.attributes?.start).getTime() / 1000),
-        duration: span.attributes?.duration || 0,
-        tags: span.attributes?.tags || {}
-      }));
-    } catch (error) {
-      throw new Error(`Failed to fetch APM traces: ${error}`);
-    }
-  }
-
   async getLogs(serviceName: string, timeRange: string, query?: string): Promise<LogEntry[]> {
     try {
       const endTime = Date.now();
@@ -126,7 +90,7 @@ export class DataDogClient {
 
   async getEndpointUsage(serviceName: string, timeRange: string): Promise<EndpointUsage[]> {
     try {
-      const traces = await this.getAPMTraces(serviceName, timeRange);
+      const logs = await this.getLogs(serviceName, timeRange, 'http.method:*');
       const endpointMap = new Map<string, {
         hitCount: number;
         lastAccessed: number;
@@ -134,25 +98,30 @@ export class DataDogClient {
         method: string;
       }>();
 
-      traces.forEach(trace => {
-        if (trace.resource && trace.tags) {
-          const method = trace.tags['http.method'] || 'UNKNOWN';
-          const endpoint = this.normalizeEndpoint(trace.resource, method);
-          const key = `${method}:${endpoint}`;
+      logs.forEach(log => {
+        if (log.attributes) {
+          const method = log.attributes['http.method'] || 'UNKNOWN';
+          const url = log.attributes['http.url'] || log.attributes['url'] || '';
+          
+          if (url) {
+            const endpoint = this.normalizeEndpoint(url, method);
+            const key = `${method}:${endpoint}`;
 
-          if (!endpointMap.has(key)) {
-            endpointMap.set(key, {
-              hitCount: 0,
-              lastAccessed: 0,
-              totalResponseTime: 0,
-              method
-            });
+            if (!endpointMap.has(key)) {
+              endpointMap.set(key, {
+                hitCount: 0,
+                lastAccessed: 0,
+                totalResponseTime: 0,
+                method
+              });
+            }
+
+            const usage = endpointMap.get(key)!;
+            usage.hitCount++;
+            const timestamp = new Date(log.timestamp).getTime();
+            usage.lastAccessed = Math.max(usage.lastAccessed, timestamp);
+            usage.totalResponseTime += log.attributes['duration'] || 0;
           }
-
-          const usage = endpointMap.get(key)!;
-          usage.hitCount++;
-          usage.lastAccessed = Math.max(usage.lastAccessed, trace.start_time);
-          usage.totalResponseTime += trace.duration;
         }
       });
 
@@ -162,7 +131,7 @@ export class DataDogClient {
           endpoint,
           method: usage.method,
           hitCount: usage.hitCount,
-          lastAccessed: new Date(usage.lastAccessed * 1000).toISOString(),
+          lastAccessed: new Date(usage.lastAccessed).toISOString(),
           avgResponseTime: usage.totalResponseTime / usage.hitCount
         };
       });
