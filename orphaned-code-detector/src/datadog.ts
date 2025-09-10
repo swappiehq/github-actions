@@ -53,19 +53,35 @@ export class DataDogClient {
 
   async getAPMTraces(serviceName: string, timeRange: string): Promise<APMTrace[]> {
     try {
-      const endTime = Math.floor(Date.now() / 1000);
-      const startTime = endTime - this.parseTimeRange(timeRange);
+      const endTime = Date.now();
+      const startTime = endTime - (this.parseTimeRange(timeRange) * 1000);
 
-      const response = await this.client.get('/api/v1/traces/search', {
-        params: {
-          service: serviceName,
-          start: startTime,
-          end: endTime,
-          limit: 1000
+      const response = await this.client.post('/api/v2/spans/search', {
+        data: {
+          attributes: {
+            filter: {
+              query: `service:${serviceName}`,
+              from: new Date(startTime).toISOString(),
+              to: new Date(endTime).toISOString()
+            },
+            page: {
+              limit: 1000
+            }
+          }
         }
       });
 
-      return response.data.traces || [];
+      const spans = response.data.data || [];
+      return spans.map((span: any) => ({
+        trace_id: span.attributes?.trace_id || '',
+        span_id: span.id || '',
+        resource: span.attributes?.resource_name || '',
+        service: span.attributes?.service || serviceName,
+        operation_name: span.attributes?.operation_name || '',
+        start_time: Math.floor(new Date(span.attributes?.start).getTime() / 1000),
+        duration: span.attributes?.duration || 0,
+        tags: span.attributes?.tags || {}
+      }));
     } catch (error) {
       throw new Error(`Failed to fetch APM traces: ${error}`);
     }
@@ -73,23 +89,36 @@ export class DataDogClient {
 
   async getLogs(serviceName: string, timeRange: string, query?: string): Promise<LogEntry[]> {
     try {
-      const endTime = Math.floor(Date.now() / 1000);
-      const startTime = endTime - this.parseTimeRange(timeRange);
+      const endTime = Date.now();
+      const startTime = endTime - (this.parseTimeRange(timeRange) * 1000);
 
       const searchQuery = query
         ? `service:${serviceName} ${query}`
         : `service:${serviceName}`;
 
-      const response = await this.client.post('/api/v1/logs-queries/list', {
-        query: searchQuery,
-        time: {
-          from: `${startTime}000`,
-          to: `${endTime}000`
+      const response = await this.client.post('/api/v2/logs/events/search', {
+        filter: {
+          query: searchQuery,
+          from: new Date(startTime).toISOString(),
+          to: new Date(endTime).toISOString()
         },
-        limit: 1000
+        page: {
+          limit: 1000
+        },
+        sort: {
+          order: 'desc'
+        }
       });
 
-      return response.data.logs || [];
+      const logs = response.data.data || [];
+      return logs.map((log: any) => ({
+        timestamp: log.attributes?.timestamp || '',
+        message: log.attributes?.message || '',
+        service: log.attributes?.service || serviceName,
+        source: log.attributes?.ddsource || '',
+        tags: log.attributes?.tags || {},
+        attributes: log.attributes || {}
+      }));
     } catch (error) {
       throw new Error(`Failed to fetch logs: ${error}`);
     }
