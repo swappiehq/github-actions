@@ -43,8 +43,8 @@ export class DataDogClient {
     this.client = axios.create({
       baseURL: `https://api.${config.site}`,
       headers: {
-        'DD-API-KEY': config.apiKey,
-        'DD-APPLICATION-KEY': config.appKey,
+        'DD_API_KEY': config.apiKey,
+        'DD_APP_KEY': config.appKey,
         'Content-Type': 'application/json'
       },
       timeout: 30000
