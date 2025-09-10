@@ -30596,40 +30596,6 @@ class DataDogClient {
             timeout: 30000
         });
     }
-    async getAPMTraces(serviceName, timeRange) {
-        try {
-            const endTime = Date.now();
-            const startTime = endTime - (this.parseTimeRange(timeRange) * 1000);
-            const response = await this.client.post('/api/v2/spans/search', {
-                data: {
-                    attributes: {
-                        filter: {
-                            query: `service:${serviceName}`,
-                            from: new Date(startTime).toISOString(),
-                            to: new Date(endTime).toISOString()
-                        },
-                        page: {
-                            limit: 1000
-                        }
-                    }
-                }
-            });
-            const spans = response.data.data || [];
-            return spans.map((span) => ({
-                trace_id: span.attributes?.trace_id || '',
-                span_id: span.id || '',
-                resource: span.attributes?.resource_name || '',
-                service: span.attributes?.service || serviceName,
-                operation_name: span.attributes?.operation_name || '',
-                start_time: Math.floor(new Date(span.attributes?.start).getTime() / 1000),
-                duration: span.attributes?.duration || 0,
-                tags: span.attributes?.tags || {}
-            }));
-        }
-        catch (error) {
-            throw new Error(`Failed to fetch APM traces: ${error}`);
-        }
-    }
     async getLogs(serviceName, timeRange, query) {
         try {
             const endTime = Date.now();
@@ -30666,25 +30632,29 @@ class DataDogClient {
     }
     async getEndpointUsage(serviceName, timeRange) {
         try {
-            const traces = await this.getAPMTraces(serviceName, timeRange);
+            const logs = await this.getLogs(serviceName, timeRange, 'http.method:*');
             const endpointMap = new Map();
-            traces.forEach(trace => {
-                if (trace.resource && trace.tags) {
-                    const method = trace.tags['http.method'] || 'UNKNOWN';
-                    const endpoint = this.normalizeEndpoint(trace.resource, method);
-                    const key = `${method}:${endpoint}`;
-                    if (!endpointMap.has(key)) {
-                        endpointMap.set(key, {
-                            hitCount: 0,
-                            lastAccessed: 0,
-                            totalResponseTime: 0,
-                            method
-                        });
+            logs.forEach(log => {
+                if (log.attributes) {
+                    const method = log.attributes['http.method'] || 'UNKNOWN';
+                    const url = log.attributes['http.url'] || log.attributes['url'] || '';
+                    if (url) {
+                        const endpoint = this.normalizeEndpoint(url, method);
+                        const key = `${method}:${endpoint}`;
+                        if (!endpointMap.has(key)) {
+                            endpointMap.set(key, {
+                                hitCount: 0,
+                                lastAccessed: 0,
+                                totalResponseTime: 0,
+                                method
+                            });
+                        }
+                        const usage = endpointMap.get(key);
+                        usage.hitCount++;
+                        const timestamp = new Date(log.timestamp).getTime();
+                        usage.lastAccessed = Math.max(usage.lastAccessed, timestamp);
+                        usage.totalResponseTime += log.attributes['duration'] || 0;
                     }
-                    const usage = endpointMap.get(key);
-                    usage.hitCount++;
-                    usage.lastAccessed = Math.max(usage.lastAccessed, trace.start_time);
-                    usage.totalResponseTime += trace.duration;
                 }
             });
             return Array.from(endpointMap.entries()).map(([key, usage]) => {
@@ -30693,7 +30663,7 @@ class DataDogClient {
                     endpoint,
                     method: usage.method,
                     hitCount: usage.hitCount,
-                    lastAccessed: new Date(usage.lastAccessed * 1000).toISOString(),
+                    lastAccessed: new Date(usage.lastAccessed).toISOString(),
                     avgResponseTime: usage.totalResponseTime / usage.hitCount
                 };
             });

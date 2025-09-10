@@ -38,7 +38,6 @@ export declare class DataDogClient {
     private client;
     private config;
     constructor(config: DataDogConfig);
-    getAPMTraces(serviceName: string, timeRange: string): Promise<APMTrace[]>;
     getLogs(serviceName: string, timeRange: string, query?: string): Promise<LogEntry[]>;
     getEndpointUsage(serviceName: string, timeRange: string): Promise<EndpointUsage[]>;
     private parseTimeRange;
