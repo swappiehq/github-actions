@@ -1,0 +1,57 @@
+name: 'Orphaned Code Detector'
+description: 'Detect orphaned code by comparing repository code with DataDog APM/logs or analyzing PR changes'
+author: 'GitHub'
+inputs:
+  mode:
+    description: 'Detection mode: "full" (with DataDog) or "pr" (PR changes only)'
+    required: false
+    default: 'pr'
+  datadog-api-key:
+    description: 'DataDog API key (required for full mode)'
+    required: false
+  datadog-app-key:
+    description: 'DataDog application key (required for full mode)'
+    required: false
+  datadog-site:
+    description: 'DataDog site (e.g., datadoghq.com, datadoghq.eu)'
+    required: false
+    default: 'datadoghq.com'
+  service-name:
+    description: 'Service name to query in DataDog APM'
+    required: false
+  time-range:
+    description: 'Time range for DataDog queries (e.g., "7d", "30d")'
+    required: false
+    default: '7d'
+  workspace-path:
+    description: 'Path to the workspace directory to analyze'
+    required: false
+    default: '.'
+  exclude-paths:
+    description: 'Comma-separated list of paths to exclude from analysis'
+    required: false
+    default: 'node_modules,dist,build,target,.git'
+  output-file:
+    description: 'Optional file path to save detailed results'
+    required: false
+  confidence-threshold:
+    description: 'Confidence threshold for orphaned code detection (0.0-1.0)'
+    required: false
+    default: '0.8'
+outputs:
+  orphaned-endpoints:
+    description: 'JSON array of potentially orphaned endpoints'
+  orphaned-functions:
+    description: 'JSON array of potentially orphaned functions'
+  orphaned-count:
+    description: 'Total number of orphaned code items found'
+  active-endpoints:
+    description: 'Number of active endpoints (full mode only)'
+  analysis-summary:
+    description: 'Summary of the analysis results'
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
+branding:
+  icon: 'search'
+  color: 'orange'
