@@ -51,7 +51,7 @@ outputs:
     description: 'Summary of the analysis results'
 runs:
   using: 'node20'
-  main: 'dist/index.js'
+  main: 'target/index.js'
 branding:
   icon: 'search'
   color: 'orange'
