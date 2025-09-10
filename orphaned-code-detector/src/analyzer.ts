@@ -243,7 +243,7 @@ export class OrphanedCodeDetector {
       }
 
       // Arrow functions
-      match = trimmed.match(/(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s+)?\(/);
+      match = trimmed.match(/(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s+)?\([^)]*\)\s*=>/);
       if (match) {
         return {
           type: 'function',
