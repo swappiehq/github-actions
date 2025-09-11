@@ -13,9 +13,9 @@ inputs:
     description: 'DataDog application key (required for full mode)'
     required: false
   datadog-site:
-    description: 'DataDog site (e.g., datadoghq.com, datadoghq.eu)'
+    description: 'DataDog site (e.g., datadoghq.eu)'
     required: false
-    default: 'datadoghq.com'
+    default: 'datadoghq.eu'
   service-name:
     description: 'Service name to query in DataDog APM'
     required: false

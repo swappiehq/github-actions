@@ -56,23 +56,12 @@ export interface AnalysisResult {
 
 export class OrphanedCodeDetector {
   private excludePaths: Set<string>;
-  private confidenceThreshold: number;
+  private readonly confidenceThreshold: number;
 
   private readonly languageMap: { [key: string]: string } = {
     '.js': 'javascript', '.jsx': 'javascript',
     '.ts': 'typescript', '.tsx': 'typescript',
     '.py': 'python',
-    '.java': 'java',
-    '.rb': 'ruby',
-    '.php': 'php',
-    '.go': 'go',
-    '.cs': 'csharp',
-    '.cpp': 'cpp', '.cc': 'cpp', '.cxx': 'cpp',
-    '.c': 'c',
-    '.rs': 'rust',
-    '.kt': 'kotlin',
-    '.scala': 'scala',
-    '.swift': 'swift'
   };
 
   constructor(excludePaths: string[] = [], confidenceThreshold: number = 0.8) {

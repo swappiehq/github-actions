@@ -6,17 +6,6 @@ export interface DataDogConfig {
   site: string;
 }
 
-export interface APMTrace {
-  trace_id: string;
-  span_id: string;
-  resource: string;
-  service: string;
-  operation_name: string;
-  start_time: number;
-  duration: number;
-  tags: { [key: string]: string };
-}
-
 export interface LogEntry {
   timestamp: string;
   message: string;
