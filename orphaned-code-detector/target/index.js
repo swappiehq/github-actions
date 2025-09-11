@@ -30757,7 +30757,7 @@ async function run() {
         // DataDog configuration for full mode
         const dataDogApiKey = core.getInput('datadog-api-key');
         const dataDogAppKey = core.getInput('datadog-app-key');
-        const dataDogSite = core.getInput('datadog-site') || 'datadoghq.com';
+        const dataDogSite = core.getInput('datadog-site') || 'datadoghq.eu';
         const serviceName = core.getInput('service-name');
         const timeRange = core.getInput('time-range') || '7d';
         core.info(`Starting orphaned code detection in ${mode} mode`);
