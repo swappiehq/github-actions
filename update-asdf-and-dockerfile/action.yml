@@ -143,7 +143,11 @@ runs:
         add-paths: .tool-versions, ${{inputs.docker_file_name}}${{inputs.add_extra_files_to_pr != '' && format(', {0}', inputs.add_extra_files_to_pr) || '' }}
         commit-message: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
         title: 'Update ${{ inputs.plugin }} from ${{ env.CURRENT_VERSION }} to ${{ env.LATEST_VERSION }}'
-        branch: 'update/${{ inputs.plugin }}/${{ env.LATEST_VERSION }}'
+        # One stable branch per plugin: create-pull-request force-pushes it and
+        # updates the PR already open on it, so each new upstream release rolls the
+        # same PR forward. The target version must not appear here -- that cuts a new
+        # branch per release and leaves a PR for every intermediate version behind.
+        branch: 'update/${{ inputs.plugin }}'
         body: 'See release notes in: ${{ env.RELEASE_NOTES }}'
         delete-branch: true
         labels: 'dependencies,${{ inputs.github_pullrequest_extra_labels }}'
