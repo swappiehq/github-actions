@@ -14,5 +14,5 @@ inputs:
     description: 'Commit'
     required: true
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'target/index.js'
