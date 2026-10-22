@@ -50,7 +50,7 @@ outputs:
   analysis-summary:
     description: 'Summary of the analysis results'
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'target/index.js'
 branding:
   icon: 'search'

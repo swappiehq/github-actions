@@ -20,5 +20,5 @@ inputs:
     required: false
 # outputs:
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'target/index.js'
